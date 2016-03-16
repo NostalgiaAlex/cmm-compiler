@@ -1,19 +1,20 @@
 %{
 #include <string.h>
+#include "common.h"
 #include "macro.h"
-#include "lib/Node.h"
-#define YYSTYPE Node*
+#include "lib/Tree.h"
+#define YYSTYPE TreeNode*
 #include "syntax.tab.h"
 #define handle(token) do { \
 	yylval = newToken(token); \
+	yylval->name = toArray(str(token)); \
 	return token; \
 } while(0)
-Node* newToken(int token) {
-	Node* p = newNode();
+TreeNode* newToken(int token) {
+	TreeNode* p = newNode();
 	p->lineNo = yylineno;
 	p->token = token;
-	p->text = (char*)malloc(strlen(yytext));
-	strcpy(p->text, yytext);
+	p->text = toArray(yytext);
 	return p;
 }
 %}
@@ -57,21 +58,25 @@ while { handle(WHILE); }
 {numDec} {
 	yylval = newToken(INT);
 	yylval->intVal = atoi(yytext);
+	yylval->name = "INT";
 	return INT;
 }
 {numHex} {
 	yylval = newToken(INT);
 	yylval->intVal = strtol(yytext, NULL, 16);
+	yylval->name = "INT";
 	return INT;
 }
 {numOct} {
 	yylval = newToken(INT);
 	yylval->intVal = strtol(yytext, NULL, 8);
+	yylval->name = "INT";
 	return INT;
 }
 {float} {
 	yylval = newToken(FLOAT);
 	yylval->floatVal = atol(yytext);
+	yylval->name = "FLOAT";
 	return FLOAT;
 }
 {space} {}

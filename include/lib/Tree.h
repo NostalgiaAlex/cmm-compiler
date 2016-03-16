@@ -3,14 +3,14 @@
 
 #include "lib/List.h"
 
-typedef struct Node {
+typedef struct TreeNode {
 	int lineNo, token, intVal;
 	float floatVal;
-	char* text;
+	char *text, *name;
 	ListHead list, children;
-} Node;
+} TreeNode;
 
-Node* newNode();
-Node* createNode(int, ...);
+TreeNode* newNode();
+void treeAddChild(TreeNode*, TreeNode*);
 
 #endif

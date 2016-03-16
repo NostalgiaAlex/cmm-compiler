@@ -8,7 +8,7 @@ typedef struct ListHead {
 } ListHead;
 
 #define listEntry(ptr, type, member) \
-	((type*)((char*)(ptr) - (int)(&((type*)0)->member)))
+	((type*)((char*)(ptr) - (long)(&((type*)0)->member)))
 
 #define listForeach(ptr, head) \
 	for ((ptr) = (head)->next; (ptr) != (head); (ptr) = (ptr)->next)

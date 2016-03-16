@@ -1,4 +1,4 @@
-CC      = clang
+CC      = gcc
 LD      = ld
 CFLAGS  = -ggdb -MD -Wall -Werror -fno-strict-aliasing -I./include -O2
 
