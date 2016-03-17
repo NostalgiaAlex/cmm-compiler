@@ -1,44 +1,65 @@
-CC      = gcc
-LD      = ld
-CFLAGS  = -ggdb -MD -Wall -Werror -fno-strict-aliasing -I./include -O2
+CC       = gcc
+LD       = ld
+CFLAGS   = -ggdb -Wall -Werror -fno-strict-aliasing -I./include -O2
+DEPFLAGS = -MM
 
 FLEX_SOURCE   = src/lexical.l
-FLEX_C_FILE   = lex.yy.c
 BISON_SOURCE  = src/syntax.y
-BISON_C_FILE  = syntax.tab.c
-BISON_HEADER  = syntax.tab.h
 SRC_DIR       = src
 TARGET_DIR    = bin
+GEN_DIR       = generate
+BISON_C_FILE  = $(GEN_DIR)/syntax.tab.c
+BISON_HEADER  = $(GEN_DIR)/syntax.tab.h
+BISON_OBJ     = $(GEN_DIR)/syntax.tab.o
+BISON_DEP     = $(GEN_DIR)/syntax.tab.d
+FLEX_C_FILE   = $(GEN_DIR)/lex.yy.c
+FLEX_OBJ      = $(GEN_DIR)/lex.yy.o
+FLEX_DEP      = $(GEN_DIR)/lex.yy.d
 OBJ_DIR       = $(TARGET_DIR)/objs
+DEP_DIR       = $(TARGET_DIR)/dep
 TARGET        = $(TARGET_DIR)/main
 CFILES        = $(shell find $(SRC_DIR) -name "*.c")
+HFILES        = $(shell find include -name "*.h")
+DFILES        = $(shell find . -name "*.d")
 OBJS          = $(CFILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
-FLEX_OBJ      = $(OBJ_DIR)/lex.yy.o
-BISON_OBJ     = $(OBJ_DIR)/syntax.tab.o
 
-$(TARGET): $(BISON_OBJ) $(FLEX_OBJ) $(OBJS) 
-	$(CC) $(OBJS) $(BISON_OBJ) $(FLEX_OBJ) $(CFLAGS) -lfl -ly -o $(TARGET)
+$(TARGET): $(OBJS) $(FLEX_OBJ) $(BISON_OBJ)
+	$(CC) $(OBJS) $(FLEX_OBJ) $(BISON_OBJ) $(CFLAGS) -lfl -ly -o $(TARGET)
 
-$(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	mkdir -p `dirname $@`
-	$(CC) $(CFLAGS) -c $< -o $@
+-include $(DFILES)
+
+$(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEP_DIR)/%.d
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) $< -c -o $@
+
+$(DEP_DIR)/%.d: $(SRC_DIR)/%.c
+	@mkdir -p $(@D)
+	$(CC) $(DEPFLAGS) -I./include $< > $(DEP_DIR)/$*.d.tmp
+	@sed -e 's|.*:|$(OBJ_DIR)/$*.o:|' < $(DEP_DIR)/$*.d.tmp > $(DEP_DIR)/$*.d
+	@rm -f $(DEP_DIR)/$*.d.tmp
 
 $(FLEX_C_FILE): $(FLEX_SOURCE) $(BISON_HEADER)
 	flex $(FLEX_SOURCE)
-
+	@mkdir -p $(GEN_DIR)
+	@mv lex.yy.c $(FLEX_C_FILE)
 $(FLEX_OBJ): $(FLEX_C_FILE)
-	mkdir -p `dirname $(FLEX_OBJ)`
-	$(CC) $(FLEX_C_FILE) -c -ggdb -O2 -I./include -o $(FLEX_OBJ)
+	@mkdir -p $(@D)
+	$(CC) -I./include $< -c -o $@
+	$(CC) $(DEPFLAGS) -I./include $< > $(FLEX_DEP).tmp
+	@sed -e 's|lex.yy.o|$(FLEX_OBJ)|' < $(FLEX_DEP).tmp > $(FLEX_DEP)
+	@rm -f $(FLEX_DEP).tmp
 
 $(BISON_C_FILE) $(BISON_HEADER): $(BISON_SOURCE) 
 	bison -d $(BISON_SOURCE)
-
+	@mkdir -p $(GEN_DIR)
+	@mv syntax.tab.c $(BISON_C_FILE)
+	@mv syntax.tab.h $(BISON_HEADER)
 $(BISON_OBJ): $(BISON_C_FILE)
-	mkdir -p `dirname $(BISON_OBJ)`
-	$(CC) $(BISON_C_FILE) -c -ggdb -O2 -I./include -o $(BISON_OBJ)
-
-run: $(TARGET)
-	./$(TARGET)
+	@mkdir -p $(@D)
+	$(CC) -I./include $< -c -o $@
+	$(CC) $(DEPFLAGS) -I./include $< > $(BISON_DEP).tmp
+	@sed -e 's|syntax.tab.o|$(BISON_OBJ)|' < $(BISON_DEP).tmp > $(BISON_DEP)
+	@rm -f $(BISON_DEP).tmp
 
 clean:
-	rm -rf parse $(TARGET_DIR) $(FLEX_C_FILE) $(BISON_C_FILE) $(BISON_HEADER)
+	rm -rf parse $(TARGET_DIR) $(GEN_DIR)
