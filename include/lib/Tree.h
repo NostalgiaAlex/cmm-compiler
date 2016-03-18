@@ -12,5 +12,6 @@ typedef struct TreeNode {
 
 TreeNode* newNode();
 void treeAddChild(TreeNode*, TreeNode*);
+bool treeIsLeaf(TreeNode*);
 
 #endif

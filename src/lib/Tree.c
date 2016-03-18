@@ -11,3 +11,7 @@ TreeNode* newNode() {
 void treeAddChild(TreeNode* root, TreeNode* p) {
 	listAddBefore(&root->children, &p->list);
 }
+
+bool treeIsLeaf(TreeNode* root) {
+	return listIsEmpty(&root->children);
+}

@@ -8,7 +8,7 @@
 int yylex();
 void yyerror(char*);
 TreeNode* createTree(int , ...);
-void print(TreeNode*);
+void print(TreeNode*, int);
 #define handle(root, token, arity, ...) \
 do { \
 	root = createTree(arity, __VA_ARGS__); \
@@ -33,7 +33,7 @@ do { \
 /* High-level Definitions */
 Program: ExtDefList {
 	   handle($$, Program, 1, $1);
-	   print($$);
+	   print($$, 0);
 	   }
 	   ;
 ExtDefList: { $$ = NULL; }

@@ -1,6 +1,7 @@
 #include "lib/Tree.h"
 #include "lib/List.h"
 #include <stdarg.h>
+#include <string.h>
 #include <stdio.h>
 
 TreeNode* createTree(int airty, ...) {
@@ -17,10 +18,23 @@ TreeNode* createTree(int airty, ...) {
 	return root;
 }
 
-void print(TreeNode* root) {
-	puts(root->name);
+void print(TreeNode* root, int stop) {
+	printf("%*s%s", stop*2, "", root->name);
+	if (treeIsLeaf(root)) {
+		if (strcmp(root->name, "INT") == 0) {
+			printf(": %d", root->intVal);
+		} else if (strcmp(root->name, "FLOAT") == 0) {
+			printf(": %.5lf", root->floatVal);
+		} else if ((strcmp(root->name, "ID") == 0) ||
+				(strcmp(root->name, "TYPE") == 0)) {
+			printf(": %s", root->text);
+		}
+	} else {
+		printf(" (%d)", root->lineNo);
+	}
+	puts("");
 	ListHead *p;
 	listForeach(p, &root->children) {
-		print(listEntry(p, TreeNode, list));
+		print(listEntry(p, TreeNode, list), stop+1);
 	}
 }
