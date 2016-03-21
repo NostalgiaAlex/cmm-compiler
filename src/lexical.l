@@ -12,11 +12,13 @@
 } while(0)
 TreeNode* newToken(int token) {
 	TreeNode* p = newNode();
+	p->isToken = true;
 	p->lineNo = yylineno;
 	p->token = token;
 	p->text = toArray(yytext);
 	return p;
 }
+int errorStatus = 0;
 %}
 %option yylineno
 digit [0-9]
@@ -75,7 +77,7 @@ while { handle(WHILE); }
 }
 {float} {
 	yylval = newToken(FLOAT);
-	yylval->floatVal = atol(yytext);
+	yylval->floatVal = atof(yytext);
 	yylval->name = "FLOAT";
 	return FLOAT;
 }
@@ -92,5 +94,6 @@ while { handle(WHILE); }
 . {
 	printf("Error type A at line %d: Mysterious characters \'%s\'\n",
 			yylineno, yytext);
+	errorStatus = 1;
 }
 %%

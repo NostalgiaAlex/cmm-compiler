@@ -26,6 +26,9 @@ OBJS          = $(CFILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 $(TARGET): $(OBJS) $(FLEX_OBJ) $(BISON_OBJ)
 	$(CC) $(OBJS) $(FLEX_OBJ) $(BISON_OBJ) $(CFLAGS) -lfl -ly -o $(TARGET)
 
+run: $(TARGET)
+	./$(TARGET)
+
 -include $(DFILES)
 
 $(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEP_DIR)/%.d

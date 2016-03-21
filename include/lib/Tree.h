@@ -4,8 +4,12 @@
 #include "lib/List.h"
 
 typedef struct TreeNode {
-	int lineNo, token, intVal;
-	float floatVal;
+	bool isToken;
+	int lineNo, token;
+	union {
+		int intVal;
+		float floatVal;
+	};
 	char *text, *name;
 	ListHead list, children;
 } TreeNode;

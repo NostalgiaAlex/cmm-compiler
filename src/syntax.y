@@ -9,6 +9,8 @@ int yylex();
 void yyerror(char*);
 TreeNode* createTree(int , ...);
 void print(TreeNode*, int);
+extern int yylineno;
+extern int errorStatus;
 #define handle(root, token, arity, ...) \
 do { \
 	root = createTree(arity, __VA_ARGS__); \
@@ -33,7 +35,7 @@ do { \
 /* High-level Definitions */
 Program: ExtDefList {
 	   handle($$, Program, 1, $1);
-	   print($$, 0);
+	   if (errorStatus == 0) print($$, 0);
 	   }
 	   ;
 ExtDefList: { $$ = NULL; }
@@ -125,4 +127,7 @@ Args: Exp COMMA Args { handle($$, Args, 3, $1, $2, $3); }
 %%
 int main() {
 	yyparse();
+}
+void yyerror(char* msg) {
+	printf("Error type B at line %d: %s.\n", yylineno, msg);
 }

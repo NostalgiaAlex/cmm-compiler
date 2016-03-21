@@ -8,6 +8,7 @@ TreeNode* createTree(int airty, ...) {
 	va_list ap;
 	va_start(ap, airty);
 	TreeNode *root = newNode();
+	root->isToken = false;
 	int i;
 	for (i = 0; i < airty; i++) {
 		TreeNode *p = va_arg(ap, TreeNode*);
@@ -20,11 +21,11 @@ TreeNode* createTree(int airty, ...) {
 
 void print(TreeNode* root, int stop) {
 	printf("%*s%s", stop*2, "", root->name);
-	if (treeIsLeaf(root)) {
+	if (root->isToken) {
 		if (strcmp(root->name, "INT") == 0) {
 			printf(": %d", root->intVal);
 		} else if (strcmp(root->name, "FLOAT") == 0) {
-			printf(": %.5lf", root->floatVal);
+			printf(": %.10lf", root->floatVal);
 		} else if ((strcmp(root->name, "ID") == 0) ||
 				(strcmp(root->name, "TYPE") == 0)) {
 			printf(": %s", root->text);
