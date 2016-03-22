@@ -17,17 +17,15 @@ FLEX_OBJ      = $(GEN_DIR)/lex.yy.o
 FLEX_DEP      = $(GEN_DIR)/lex.yy.d
 OBJ_DIR       = $(TARGET_DIR)/objs
 DEP_DIR       = $(TARGET_DIR)/dep
-TARGET        = $(TARGET_DIR)/main
+TARGET        = $(TARGET_DIR)/parse
 CFILES        = $(shell find $(SRC_DIR) -name "*.c")
-HFILES        = $(shell find include -name "*.h")
 DFILES        = $(shell find . -name "*.d")
+TESTFILES     = $(shell find testcase -name "*.c")
+OUTPUTFILES   = $(shell find testcase -name "*.output")
 OBJS          = $(CFILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 $(TARGET): $(OBJS) $(FLEX_OBJ) $(BISON_OBJ)
 	$(CC) $(OBJS) $(FLEX_OBJ) $(BISON_OBJ) $(CFLAGS) -lfl -ly -o $(TARGET)
-
-run: $(TARGET)
-	./$(TARGET)
 
 -include $(DFILES)
 
@@ -64,5 +62,8 @@ $(BISON_OBJ): $(BISON_C_FILE)
 	@sed -e 's|syntax.tab.o|$(BISON_OBJ)|' < $(BISON_DEP).tmp > $(BISON_DEP)
 	@rm -f $(BISON_DEP).tmp
 
+test: $(TARGET) $(TESTFILES)
+	./test.sh $(TESTFILES)
+
 clean:
-	rm -rf parse $(TARGET_DIR) $(GEN_DIR)
+	rm -rf parse $(TARGET_DIR) $(GEN_DIR) $(OUTPUTFILES)

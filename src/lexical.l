@@ -92,7 +92,7 @@ while { handle(WHILE); }
 	}
 }
 . {
-	printf("Error type A at line %d: Mysterious characters \'%s\'\n",
+	printf("Error type A at Line %d: Mysterious character \"%s\".\n",
 			yylineno, yytext);
 	errorStatus = 1;
 }

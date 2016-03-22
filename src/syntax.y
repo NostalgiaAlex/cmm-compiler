@@ -125,9 +125,6 @@ Args: Exp COMMA Args { handle($$, Args, 3, $1, $2, $3); }
 	| Exp { handle($$, Args, 1, $1); }
 	;
 %%
-int main() {
-	yyparse();
-}
 void yyerror(char* msg) {
-	printf("Error type B at line %d: %s.\n", yylineno, msg);
+	printf("Error type B at Line %d: %s.\n", yylineno, msg);
 }
