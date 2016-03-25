@@ -24,7 +24,7 @@ do { \
 %left RELOP
 %left PLUS MINUS
 %left STAR DIV
-%right NOT
+%right NOT NEG
 %left LP RP DOT LB RB
 %token LC RC
 %token TYPE STRUCT RETURN IF WHILE
@@ -113,7 +113,7 @@ Exp: Exp ASSIGNOP Exp { handle($$, Exp, 3, $1, $2, $3); }
    | Exp LB Exp RB { handle($$, Exp, 4, $1, $2, $3, $4); }
    | Exp DOT ID { handle($$, Exp, 3, $1, $2, $3); }
    | LP Exp RP { handle($$, Exp, 3, $1, $2, $3); }
-   | MINUS Exp { handle($$, Exp, 2, $1, $2); }
+   | MINUS Exp %prec NEG { handle($$, Exp, 2, $1, $2); }
    | NOT Exp { handle($$, Exp, 2, $1, $2); }
    | ID LP Args RP { handle($$, Exp, 4, $1, $2, $3, $4); }
    | ID LP RP { handle($$, Exp, 3, $1, $2, $3); }
