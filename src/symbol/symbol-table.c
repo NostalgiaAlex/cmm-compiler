@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "lib/List.h"
 #include "symbol.h"
 #include "stdio.h"
@@ -9,7 +10,7 @@
 
 typedef struct SymbolNode {
 	Symbol *symbol;
-	ListHead list, depth;
+	ListHead list, stack;
 } SymbolNode;
 
 static ListHead symbolTable[SIZE], stack[SIZE];
@@ -25,6 +26,7 @@ void symbolTableInit() {
 }
 
 static unsigned hashPJW(const char* name) {
+	assert(name != NULL);
 	unsigned val = 0;
 	for (; *name; name++) {
 		val = (val<<2)+*name;
@@ -38,26 +40,32 @@ void symbolsStackPush() {
 	stackTop++;
 }
 void symbolsStackPop() {
+	assert(stackTop >= 0);
 	ListHead* top = stack+stackTop;
 	while (!listIsEmpty(top)) {
-		SymbolNode *p = listEntry(top->next, SymbolNode, depth);
+		SymbolNode *p = listEntry(top->next, SymbolNode, stack);
 		listDelete(&p->list);
-		listDelete(&p->depth);
+		listDelete(&p->stack);
+		symbolRelease(p->symbol);
 		free(p);
 	}
 	stackTop--;
 }
 
 void symbolInsert(Symbol* symbol) {
+	assert(symbol != NULL);
+	assert(symbol->name != NULL);
 	SymbolNode *p = (SymbolNode*)malloc(sizeof(SymbolNode));
+	symbol->depth = stackTop;
 	p->symbol = symbol;
 	listInit(&p->list);
-	listInit(&p->depth);
+	listInit(&p->stack);
 	unsigned hashVal = hashPJW(symbol->name);
 	listAddBefore(symbolTable+hashVal, &p->list);
-	listAddBefore(stack+stackTop, &p->depth);
+	listAddBefore(stack+stackTop, &p->stack);
 }
 Symbol* symbolFind(const char* name) {
+	assert(name != NULL);
 	unsigned hash = hashPJW(name);
 	ListHead *p;
 	listForeach(p, symbolTable+hash) {
@@ -66,4 +74,7 @@ Symbol* symbolFind(const char* name) {
 			return symbol;
 	}
 	return NULL;
+}
+bool symbolAtStackTop(Symbol* symbol) {
+	return symbol->depth == stackTop;
 }

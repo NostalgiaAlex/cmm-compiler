@@ -1,8 +1,9 @@
-#include "lib/Tree.h"
-#include "lib/List.h"
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include "lib/Tree.h"
+#include "lib/List.h"
+#include "common.h"
 
 TreeNode* createTree(int airty, ...) {
 	va_list ap;
@@ -22,12 +23,11 @@ TreeNode* createTree(int airty, ...) {
 void print(TreeNode* root, int stop) {
 	printf("%*s%s", stop*2, "", root->name);
 	if (root->isToken) {
-		if (strcmp(root->name, "INT") == 0) {
+		if (isSyntax(root, INT)) {
 			printf(": %d", root->intVal);
-		} else if (strcmp(root->name, "FLOAT") == 0) {
+		} else if (isSyntax(root, FLOAT)) {
 			printf(": %.10lf", root->floatVal);
-		} else if ((strcmp(root->name, "ID") == 0) ||
-				(strcmp(root->name, "TYPE") == 0)) {
+		} else if (isSyntax(root, ID) || isSyntax(root, TYPE)) {
 			printf(": %s", root->text);
 		}
 	} else {

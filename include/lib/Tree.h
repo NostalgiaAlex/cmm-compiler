@@ -17,5 +17,8 @@ typedef struct TreeNode {
 TreeNode* newNode();
 void treeAddChild(TreeNode*, TreeNode*);
 bool treeIsLeaf(TreeNode*);
+TreeNode* treeFirstChild(TreeNode*);
+TreeNode* treeLastChild(TreeNode*);
+TreeNode* treeKthChild(TreeNode*, int);
 
 #endif
