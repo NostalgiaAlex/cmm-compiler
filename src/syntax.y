@@ -8,6 +8,7 @@
 int yylex();
 void yyerror(char*);
 TreeNode* createTree(int , ...);
+void analyseProgram(TreeNode*);
 void print(TreeNode*, int);
 extern int yylineno;
 extern int errorStatus;
@@ -35,7 +36,10 @@ do { \
 /* High-level Definitions */
 Program: ExtDefList {
 	   handle($$, Program, 1, $1);
-	   if (errorStatus == 0) print($$, 0);
+	   if (errorStatus == 0) {
+		   // print($$, 0);
+		   analyseProgram($$);
+	   }
 	   }
 	   ;
 ExtDefList: { $$ = NULL; }
@@ -91,7 +95,7 @@ Stmt: Exp SEMI { handle($$, Stmt, 2, $1, $2); }
 
 /* Local Definitions */
 DefList: { $$ = NULL; }
-	   | Def DefList { handle($$, DecList, 2, $1, $2); }
+	   | Def DefList { handle($$, DefList, 2, $1, $2); }
 	   ;
 Def: Specifier DecList SEMI { handle($$, Def, 3, $1, $2, $3); }
    ;

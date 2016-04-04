@@ -46,15 +46,24 @@ void symbolsStackPop() {
 		SymbolNode *p = listEntry(top->next, SymbolNode, stack);
 		listDelete(&p->list);
 		listDelete(&p->stack);
-		symbolRelease(p->symbol);
+		free(p->symbol->name);
+		free(p->symbol);
 		free(p);
 	}
 	stackTop--;
+}
+bool symbolAtStackTop(const char* name) {
+	Symbol *symbol = symbolFind(name);
+	return (symbol != NULL)&& (symbol->depth == stackTop);
 }
 
 void symbolInsert(Symbol* symbol) {
 	assert(symbol != NULL);
 	assert(symbol->name != NULL);
+	if (symbolAtStackTop(symbol->name)) {
+		printf("Error type 3 at Line : Redefined variable\"%s\"\n", symbol->name);
+		return;
+	}
 	SymbolNode *p = (SymbolNode*)malloc(sizeof(SymbolNode));
 	symbol->depth = stackTop;
 	p->symbol = symbol;
@@ -74,7 +83,4 @@ Symbol* symbolFind(const char* name) {
 			return symbol;
 	}
 	return NULL;
-}
-bool symbolAtStackTop(Symbol* symbol) {
-	return symbol->depth == stackTop;
 }
