@@ -50,7 +50,7 @@ static Type* analyseSpecifier(TreeNode* p) {
 		} else {
 			assert(isSyntax(tag, OptTag));
 			Type *type = (Type*)malloc(sizeof(Type));
-			type->kind = STRUCT;
+			type->kind = STRUCTURE;
 			analyseDefList(treeKthChild(first, 4), &type->structure);
 			if (!treeIsLeaf(tag)) {
 				Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));

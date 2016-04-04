@@ -2,8 +2,6 @@
 #include <string.h>
 #include <stdio.h>
 #include "lib/Tree.h"
-#include "lib/List.h"
-#include "common.h"
 
 TreeNode* createTree(int airty, ...) {
 	va_list ap;

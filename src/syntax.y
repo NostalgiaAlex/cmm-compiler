@@ -68,7 +68,6 @@ VarDec: ID { handle($$, VarDec, 1, $1); }
 	  ;
 FunDec: ID LP VarList RP { handle($$, FunDec, 4, $1, $2, $3, $4); }
 	  | ID LP RP { handle($$, FunDec, 3, $1, $2, $3); }
-	  | error RP { errorStatus = 2; }
 	  ;
 VarList: ParamDec COMMA VarList { handle($$, VarList, 3, $1, $2, $3); }
 	   | ParamDec { handle($$, VarList, 1, $1); }
@@ -78,7 +77,6 @@ ParamDec: Specifier VarDec { handle($$, ParamDec, 2, $1, $2); }
 
 /* Statements */
 CompSt: LC DefList StmtList RC { handle($$, CompSt, 4, $1, $2, $3, $4); }
-	  | error RC { errorStatus = 2; }
 	  ;
 StmtList: { $$ = NULL; }
 		| Stmt StmtList { handle($$, StmtList, 2, $1, $2); }
@@ -89,7 +87,6 @@ Stmt: Exp SEMI { handle($$, Stmt, 2, $1, $2); }
 	| IF LP Exp RP Stmt %prec SUB_ELSE { handle($$, Stmt, 5, $1, $2, $3, $4, $5); }
 	| IF LP Exp RP Stmt ELSE Stmt { handle($$, Stmt, 7, $1, $2, $3, $4, $5, $6, $7); }
 	| WHILE LP Exp RP Stmt { handle($$, Stmt, 5, $1, $2, $3, $4, $5); }
-	| error SEMI { errorStatus = 2; }
 	;
 
 /* Local Definitions */
@@ -97,7 +94,6 @@ DefList: { $$ = NULL; }
 	   | Def DefList { handle($$, DecList, 2, $1, $2); }
 	   ;
 Def: Specifier DecList SEMI { handle($$, Def, 3, $1, $2, $3); }
-   | error SEMI { errorStatus = 2; }
    ;
 DecList: Dec { handle($$, DecList, 1, $1); }
 	   | Dec COMMA DecList { handle($$, DecList, 3, $1, $2, $3); }
@@ -124,7 +120,6 @@ Exp: Exp ASSIGNOP Exp { handle($$, Exp, 3, $1, $2, $3); }
    | ID { handle($$, Exp, 1, $1); }
    | INT { handle($$, Exp, 1, $1); }
    | FLOAT { handle($$, Exp, 1, $1); }
-   | error RP { errorStatus = 2; }
    ;
 Args: Exp COMMA Args { handle($$, Args, 3, $1, $2, $3); }
 	| Exp { handle($$, Args, 1, $1); }

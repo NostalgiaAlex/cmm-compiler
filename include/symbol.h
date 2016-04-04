@@ -1,10 +1,13 @@
 #ifndef __SYMBOLS_H__
 #define __SYMBOLS_H__
+#include <stdbool.h>
 #include "lib/List.h"
 #include "lib/Tree.h"
 
+typedef enum { BASIC, ARRAY, STRUCTURE } TypeKind;
+typedef enum { VAR, STRUCT, FUNC} SymbolKind;
 typedef struct Type {
-	enum { BASIC, ARRAY, STRUCTURE } kind;
+	TypeKind kind;
 	union {
 		int basic;
 		struct { struct Type *elem; int size; } array;
@@ -29,7 +32,7 @@ bool typeEqual(Type*, Type*);
 
 typedef struct Symbol {
 	char* name;
-	enum { VAR, STRUCT, FUNC } kind;
+	SymbolKind kind;
 	union {
 		Type* type;
 		Func* func;
@@ -37,9 +40,8 @@ typedef struct Symbol {
 	int depth;
 } Symbol;
 void symbolRelease(Symbol*);
-void symbolGenerate(TreeNode* p);
 
-void symbolsInit();
+void symbolTableInit();
 void symbolsStackPush();
 void symbolsStackPop();
 

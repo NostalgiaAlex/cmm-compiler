@@ -1,6 +1,7 @@
 #ifndef __LIB_LIST_H__
 #define __LIB_LIST_H__
 
+#include <stdbool.h>
 #include "common.h"
 
 typedef struct ListHead {

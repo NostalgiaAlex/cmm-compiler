@@ -1,5 +1,6 @@
 #include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 #include "lib/Tree.h"
 #include "symbol.h"
 
