@@ -24,7 +24,10 @@ const char* str[] = {
 		"\"%s\" is not a function",
 		"\"%s\" is not an integer",
 		"Illegal use of \".\"",
-		"Non-existent field \"%s\""
+		"Non-existent field \"%s\"",
+		"Redefined field \"%s\"",
+		"Duplicated name \"%s\"",
+		"Undefined structure \"%s\"",
 };
 
 typedef Field Dec;
@@ -42,9 +45,14 @@ static void analyseVarList(TreeNode*, Func*);
 static Arg* analyseParamDec(TreeNode*);
 static void analyseStmtList(TreeNode*);
 static void analyseStmt(TreeNode*);
-static Type* analyseExp(TreeNode*);
 static void analyseArgs(TreeNode*, ListHead*);
 static void analyseCompSt(TreeNode*, Func*);
+
+typedef struct Val {
+	Type* type;
+	bool isVar;
+} Val;
+static Val* analyseExp(TreeNode*);
 
 static void analyseExtDefList(TreeNode* p) {
 	assert(p != NULL);
@@ -100,7 +108,10 @@ static Type* analyseSpecifier(TreeNode* p) {
 			TreeNode *id = treeFirstChild(tag);
 			assert(isSyntax(id, ID));
 			Symbol *symbol = symbolFind(id->text);
-			assert(symbol->kind == STRUCT);
+			if ((symbol == NULL)||(symbol->kind != STRUCT)) {
+				semanticError(17, id->lineNo, id->text);
+				return TYPE_INT;
+			}
 			return symbol->type;
 		} else {
 			int defListIndex = (isSyntax(tag, OptTag))? 4: 3;
@@ -115,7 +126,8 @@ static Type* analyseSpecifier(TreeNode* p) {
 				symbol->name = toArray(id->text);
 				symbol->kind = STRUCT;
 				symbol->type = type;
-				symbolInsert(symbol);
+				if (!symbolInsert(symbol))
+					semanticError(16, id->lineNo, id->text);
 			}
 			return type;
 		}
@@ -148,7 +160,11 @@ static void analyseDecList(TreeNode* p, Type* type, ListHead* list) {
 	TreeNode *rest = treeLastChild(p);
 	Dec *varDec = analyseVarDec(treeFirstChild(dec), type);
 	if (list) {
-		listAddBefore(list, &varDec->list);
+		if (fieldExist(list, varDec->name)) {
+			semanticError(15, p->lineNo, varDec->name);
+		} else {
+			listAddBefore(list, &varDec->list);
+		}
 		if (isSyntax(rest, DecList))
 			analyseDecList(rest, type, list);
 	} else {
@@ -259,7 +275,7 @@ static void analyseStmt(TreeNode* p) {
 	assert(isSyntax(p, Stmt));
 	ListHead *q;
 	if (isSyntax(treeFirstChild(p), RETURN)) {
-		Type* type = analyseExp(treeKthChild(p, 2));
+		Type* type = analyseExp(treeKthChild(p, 2))->type;
 		if (!typeEqual(type, retType))
 			semanticError(8, p->lineNo, "");
 	} else {
@@ -272,11 +288,14 @@ static void analyseStmt(TreeNode* p) {
 	}
 }
 
-static Type* analyseExp(TreeNode* p) {
+static Val* analyseExp(TreeNode* p) {
 	assert(p != NULL);
 	assert(isSyntax(p, Exp));
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *last = treeLastChild(p);
+	Val *val = (Val*)malloc(sizeof(Val));
+	val->isVar = false;
+	val->type = NULL;
 	if (isSyntax(first, ID)) {
 		if (isSyntax(last, RP)) { // ID LP Args RP | ID LP RP
 			TreeNode *id = treeFirstChild(p);
@@ -298,43 +317,42 @@ static Type* analyseExp(TreeNode* p) {
 					argsToStr(&list, argsStr);
 					semanticError(9, id->lineNo, symbol->name, paramsStr, argsStr);
 				}
-				return symbol->func->retType;
+				val->type = symbol->func->retType;
+				return val;
 			}
 		} else { // ID
 			Symbol *symbol = symbolFind(first->text);
 			if (!symbol) {
 				semanticError(1, first->lineNo, first->text);
 			} else {
-				return symbol->type;
+				val->type = symbol->type;
+				val->isVar = true;
+				return val;
 			}
 		}
 	} else if (isSyntax(first, INT)) {
-		return TYPE_INT;
+		val->type = TYPE_INT;
+		return val;
 	} else if (isSyntax(first, FLOAT)) {
-		return TYPE_FLOAT;
-	} else if (isSyntax(last, RB)) {
+		val->type = TYPE_FLOAT;
+		return val;
+	} else if (isSyntax(last, RB)) { // EXP LB EXP RB
 		TreeNode *third = treeKthChild(p, 3);
-		Type *base = analyseExp(first);
-		Type *index = analyseExp(third);
-		if (base->kind != ARRAY)
+		Val *base = analyseExp(first);
+		Val *index = analyseExp(third);
+		if (base->type->kind != ARRAY)
 			semanticError(10, first->lineNo, first->text);
-		if (!typeEqual(index, TYPE_INT))
+		if (!typeEqual(index->type, TYPE_INT))
 			semanticError(12, third->lineNo, first->text);
-	} else if (isSyntax(last, ID)) {
+	} else if (isSyntax(last, ID)) { // EXP DOT ID
 		TreeNode *second = treeKthChild(p, 2);
 		assert(isSyntax(second, DOT));
-		Type* type = analyseExp(first);
+		Val *base = analyseExp(first);
 		char* fieldName = last->text;
-		if (type->kind != STRUCTURE) {
+		if (base->type->kind != STRUCTURE) {
 			semanticError(13, second->lineNo, "");
-		} else {
-			ListHead *q;
-			listForeach(q, &type->structure) {
-				Field* field = listEntry(q, Field, list);
-				if (strcmp(field->name, fieldName) == 0) break;
-			}
-			if (q == &type->structure)
-				semanticError(14, last->lineNo, fieldName);
+		} else if (!fieldExist(&base->type->structure, fieldName)) {
+			semanticError(14, last->lineNo, fieldName);
 		}
 	} else {
 		ListHead *q;
@@ -352,7 +370,7 @@ static void analyseArgs(TreeNode* p, ListHead* list) {
 	TreeNode *exp = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
 	Arg *arg = (Arg*)malloc(sizeof(Arg));
-	arg->type = analyseExp(exp);
+	arg->type = analyseExp(exp)->type;
 	listAddBefore(list, &arg->list);
 	if (isSyntax(rest, Args))
 		analyseArgs(rest, list);

@@ -73,7 +73,6 @@ void typeToStr(Type* type, char* s) {
 		strcpy(s, "struct");
 	}
 }
-
 void argsToStr(ListHead* list, char* s) {
 	ListHead *p;
 	listForeach(p, list) {
@@ -85,4 +84,14 @@ void argsToStr(ListHead* list, char* s) {
 		typeToStr(arg->type, s);
 		s += strlen(s);
 	}
+}
+
+bool fieldExist(ListHead* structure, const char* fieldName) {
+	ListHead *p;
+	listForeach(p, structure) {
+		Field* field = listEntry(p, Field, list);
+		if (strcmp(field->name, fieldName) == 0)
+			return true;
+	}
+	return false;
 }
