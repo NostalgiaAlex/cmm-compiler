@@ -4,12 +4,12 @@
 #include "lib/Tree.h"
 #include "symbol.h"
 
-Type *INT, *FLOAT;
+Type *TYPE_INT, *TYPE_FLOAT;
 void typesInit() {
-	INT = (Type*)malloc(sizeof(Type));
-	INT->basic = 0;
-	FLOAT = (Type*)malloc(sizeof(Type));
-	FLOAT->basic = 1;
+	TYPE_INT = (Type*)malloc(sizeof(Type));
+	TYPE_INT->basic = 0;
+	TYPE_FLOAT = (Type*)malloc(sizeof(Type));
+	TYPE_FLOAT->basic = 1;
 }
 
 bool typeEqual(Type* a, Type* b) {

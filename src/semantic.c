@@ -11,17 +11,25 @@ do { \
 } while (0)
 const char* str[] = {
 		"",
-		"",
-		"",
+		"Undefined variable \"%s\"",
+		"Undefined function \"%s\"",
 		"Redefined variable \"%s\"",
-		"Redefined function \"%s\""
+		"Redefined function \"%s\"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"\"%s\" is not a function",
+		"",
 };
 
 typedef Field Dec;
 
 static Type* analyseSpecifier(TreeNode*);
-static void analyseExtDef(TreeNode*);
 static void analyseExtDecList(TreeNode *, Type*);
+static void analyseExtDef(TreeNode*);
 static void analyseDefList(TreeNode*, ListHead*);
 static void analyseDef(TreeNode*, ListHead*);
 static void analyseDecList(TreeNode*, Type*, ListHead*);
@@ -29,6 +37,10 @@ static Dec* analyseVarDec(TreeNode*, Type*);
 static void analyseFunDec(TreeNode*, Type*);
 static void analyseVarList(TreeNode*, Func*);
 static Arg* analyseParamDec(TreeNode*);
+static void analyseStmtList(TreeNode*);
+static void analyseStmt(TreeNode*);
+static Type* analyseExp(TreeNode*);
+
 static void analyseCompSt(TreeNode* p) ;
 
 static void analyseExtDefList(TreeNode* p) {
@@ -74,8 +86,8 @@ static Type* analyseSpecifier(TreeNode* p) {
 	assert(isSyntax(p, Specifier));
 	TreeNode* first = treeFirstChild(p);
 	if (isSyntax(first, TYPE)) {
-		if (strcmp(first->text, "int") == 0) return INT;
-		else return FLOAT;
+		if (strcmp(first->text, "int") == 0) return TYPE_INT;
+		else return TYPE_FLOAT;
 	} else {
 		assert(isSyntax(first, StructSpecifier));
 		assert(isSyntax(treeFirstChild(first), STRUCT));
@@ -209,11 +221,67 @@ static void analyseCompSt(TreeNode* p) {
 	assert(p != NULL);
 	assert(isSyntax(p, CompSt));
 	symbolsStackPush();
-	TreeNode *second = treeKthChild(p, 2);
-	if (isSyntax(second, DefList))
-		analyseDefList(treeKthChild(p, 2), NULL);
-	// TODO: analyseStmtList
+	TreeNode *next = treeKthChild(p, 2);
+	if (isSyntax(next, DefList)) {
+		analyseDefList(next, NULL);
+		next = treeKthChild(p, 3);
+	}
+	if (isSyntax(next, StmtList))
+		analyseStmtList(next);
 	symbolsStackPop();
+}
+
+static void analyseStmtList(TreeNode* p) {
+	assert(p != NULL);
+	assert(isSyntax(p, StmtList));
+	TreeNode *rest = treeLastChild(p);
+	analyseStmt(treeFirstChild(p));
+	if (isSyntax(rest, StmtList))
+		analyseStmtList(rest);
+}
+
+static void analyseStmt(TreeNode* p) {
+	assert(p != NULL);
+	assert(isSyntax(p, Stmt));
+	ListHead *q;
+	listForeach(q, &p->children) {
+		TreeNode *r = listEntry(q, TreeNode, list);
+		if (isSyntax(r, Stmt)) analyseStmt(r);
+		else if (isSyntax(r, CompSt)) analyseCompSt(r);
+		else if (isSyntax(r, Exp)) analyseExp(r);
+	}
+}
+
+static Type* analyseExp(TreeNode* p) {
+	assert(p != NULL);
+	assert(isSyntax(p, Exp));
+	if (isSyntax(treeLastChild(p), RP)) {
+		TreeNode *id = treeFirstChild(p);
+		assert(isSyntax(id, ID));
+		Symbol *symbol = symbolFind(id->text);
+		if (!symbol) {
+			semanticError(2, id->lineNo, id->text);
+		} else if (symbol->kind != FUNC) {
+			semanticError(11, id->lineNo, id->text);
+		} else {
+			return symbol->func->retType;
+		}
+	} else {
+		ListHead *q;
+		listForeach(q, &p->children) {
+			TreeNode *r = listEntry(q, TreeNode, list);
+			if (isSyntax(r, Exp)) analyseExp(r);
+			else if (isSyntax(r, ID)) {
+				Symbol* symbol = symbolFind(r->text);
+				if (!symbol) {
+					semanticError(1, r->lineNo, r->text);
+				} else {
+					return symbol->type;
+				}
+			}
+		}
+	}
+	return NULL;
 }
 
 void analyseProgram(TreeNode* p) {

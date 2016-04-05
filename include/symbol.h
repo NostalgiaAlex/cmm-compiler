@@ -1,5 +1,5 @@
-#ifndef __SYMBOLS_H__
-#define __SYMBOLS_H__
+#ifndef __SYMBOL_H__
+#define __SYMBOL_H__
 #include <stdbool.h>
 #include "lib/List.h"
 #include "lib/Tree.h"
@@ -26,7 +26,7 @@ typedef struct Func {
 } Func;
 typedef Field Arg;
 
-extern Type *INT, *FLOAT;
+extern Type *TYPE_INT, *TYPE_FLOAT;
 void typesInit();
 bool typeEqual(Type*, Type*);
 
@@ -39,7 +39,6 @@ typedef struct Symbol {
 	};
 	int depth;
 } Symbol;
-void symbolRelease(Symbol*);
 
 void symbolTableInit();
 void symbolsStackPush();
