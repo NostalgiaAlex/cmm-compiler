@@ -57,13 +57,10 @@ bool symbolAtStackTop(const char* name) {
 	return (symbol != NULL)&& (symbol->depth == stackTop);
 }
 
-void symbolInsert(Symbol* symbol) {
+bool symbolInsert(Symbol* symbol) {
 	assert(symbol != NULL);
 	assert(symbol->name != NULL);
-	if (symbolAtStackTop(symbol->name)) {
-		printf("Error type 3 at Line : Redefined variable\"%s\"\n", symbol->name);
-		return;
-	}
+	if (symbolAtStackTop(symbol->name)) return false;
 	SymbolNode *p = (SymbolNode*)malloc(sizeof(SymbolNode));
 	symbol->depth = stackTop;
 	p->symbol = symbol;
@@ -72,6 +69,7 @@ void symbolInsert(Symbol* symbol) {
 	unsigned hashVal = hashPJW(symbol->name);
 	listAddBefore(symbolTable+hashVal, &p->list);
 	listAddBefore(stack+stackTop, &p->stack);
+	return true;
 }
 Symbol* symbolFind(const char* name) {
 	assert(name != NULL);

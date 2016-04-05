@@ -3,12 +3,21 @@
 #include <stdio.h>
 #include "lib/Tree.h"
 #include "symbol.h"
+#define semanticError(errorNo, lineNo, ...) \
+do { \
+	printf("Error type %d at Line %d: ", (errorNo), (lineNo)); \
+	printf(str[errorNo], __VA_ARGS__);\
+	puts(".");\
+} while (0)
+const char* str[] = {
+		"",
+		"",
+		"",
+		"Redefined variable \"%s\"",
+		"Redefined function \"%s\""
+};
 
 typedef Field Dec;
-static void decRelease(Dec* dec) {
-	free(dec->name);
-	free(dec);
-}
 
 static Type* analyseSpecifier(TreeNode*);
 static void analyseExtDef(TreeNode*);
@@ -21,22 +30,6 @@ static void analyseFunDec(TreeNode*, Type*);
 static void analyseVarList(TreeNode*, Func*);
 static Arg* analyseParamDec(TreeNode*);
 static void analyseCompSt(TreeNode* p) ;
-
-void decListToSymbols(ListHead* list) {
-	ListHead *p;
-	listForeach(p, list) {
-		Dec *dec = listEntry(p, Dec, list);
-		Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
-		symbol->name = toArray(dec->name);
-		symbol->type = dec->type;
-		symbolInsert(symbol);
-	}
-	while (!listIsEmpty(list)) {
-		Dec *dec = listEntry(list->next, Dec, list);
-		listDelete(&dec->list);
-		decRelease(dec);
-	}
-}
 
 static void analyseExtDefList(TreeNode* p) {
 	assert(p != NULL);
@@ -70,7 +63,8 @@ static void analyseExtDecList(TreeNode *p, Type *type) {
 	symbol->name = toArray(varDec->name);
 	symbol->kind = VAR;
 	symbol->type = type;
-	symbolInsert(symbol);
+	if (!symbolInsert(symbol))
+		semanticError(3, extDec->lineNo, symbol->name);
 	if (isSyntax(rest, DecList))
 		analyseExtDecList(rest, type);
 }
@@ -93,13 +87,16 @@ static Type* analyseSpecifier(TreeNode* p) {
 			assert(symbol->kind == STRUCT);
 			return symbol->type;
 		} else {
-			assert(isSyntax(tag, OptTag));
+			int defListIndex = (isSyntax(tag, OptTag))? 4: 3;
 			Type *type = (Type*)malloc(sizeof(Type));
 			type->kind = STRUCTURE;
 			listInit(&type->structure);
-			analyseDefList(treeKthChild(first, 4), &type->structure);
-			if (!treeIsLeaf(tag)) {
+			analyseDefList(treeKthChild(first, defListIndex), &type->structure);
+			if (defListIndex == 4) {
+				TreeNode* id = treeFirstChild(tag);
+				assert(isSyntax(id, ID));
 				Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
+				symbol->name = toArray(id->text);
 				symbol->kind = STRUCT;
 				symbol->type = type;
 				symbolInsert(symbol);
@@ -134,9 +131,19 @@ static void analyseDecList(TreeNode* p, Type* type, ListHead* list) {
 	TreeNode *dec = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
 	Dec *varDec = analyseVarDec(treeFirstChild(dec), type);
-	listAddBefore(list, &varDec->list);
-	if (isSyntax(rest, DecList))
-		analyseDecList(rest, type, list);
+	if (list) {
+		listAddBefore(list, &varDec->list);
+		if (isSyntax(rest, DecList))
+			analyseDecList(rest, type, list);
+	} else {
+		Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
+		symbol->name = varDec->name;
+		symbol->kind = VAR;
+		symbol->type = varDec->type;
+		if (!symbolInsert(symbol))
+			semanticError(3, p->lineNo, symbol->name);
+		free(varDec);
+	}
 }
 
 static Dec* analyseVarDec(TreeNode* p, Type* type) {
@@ -167,12 +174,17 @@ static void analyseFunDec(TreeNode* p, Type* type) {
 	func->retType = type;
 	func->argc = 0;
 	listInit(&func->args);
+	TreeNode* id = treeFirstChild(p);
+	assert(isSyntax(id, ID));
 	TreeNode* varList = treeKthChild(p, 3);
 	if (isSyntax(varList, VarList))
 		analyseVarList(varList, func);
 	Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
+	symbol->name = toArray(id->text);
 	symbol->kind = FUNC;
 	symbol->func = func;
+	if (!symbolInsert(symbol))
+		semanticError(4, id->lineNo, symbol->name);
 }
 
 static void analyseVarList(TreeNode* p, Func* func) {
@@ -197,10 +209,9 @@ static void analyseCompSt(TreeNode* p) {
 	assert(p != NULL);
 	assert(isSyntax(p, CompSt));
 	symbolsStackPush();
-	ListHead list;
-	listInit(&list);
-	analyseDefList(treeKthChild(p, 2), &list);
-	decListToSymbols(&list);
+	TreeNode *second = treeKthChild(p, 2);
+	if (isSyntax(second, DefList))
+		analyseDefList(treeKthChild(p, 2), NULL);
 	// TODO: analyseStmtList
 	symbolsStackPop();
 }

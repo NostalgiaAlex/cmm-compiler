@@ -46,7 +46,7 @@ void symbolsStackPush();
 void symbolsStackPop();
 bool symbolAtStackTop(const char*);
 
-void symbolInsert(Symbol*);
+bool symbolInsert(Symbol*);
 Symbol* symbolFind(const char*);
 
 #endif
