@@ -27,10 +27,11 @@ bool typeEqual(Type* a, Type* b) {
 		case STRUCTURE:
 			p = a->structure.next;
 			q = b->structure.next;
-			while ((p != &a->structure)&&(q != &a->structure)) {
+			while ((p != &a->structure)&&(q != &b->structure)) {
 				Type * typeP = listEntry(p, Field, list)->type;
 				Type * typeQ = listEntry(q, Field, list)->type;
 				if (!typeEqual(typeP, typeQ)) return false;
+				p = p->next; q = q->next;
 			}
 			return (p == &a->structure)&&(q == &b->structure);
 	}
