@@ -23,6 +23,8 @@ const char* str[] = {
 		"\"%s\" is not an array",
 		"\"%s\" is not a function",
 		"\"%s\" is not an integer",
+		"Illegal use of \".\"",
+		"Non-existent field \"%s\""
 };
 
 typedef Field Dec;
@@ -276,7 +278,7 @@ static Type* analyseExp(TreeNode* p) {
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *last = treeLastChild(p);
 	if (isSyntax(first, ID)) {
-		if (isSyntax(last, RP)) {
+		if (isSyntax(last, RP)) { // ID LP Args RP | ID LP RP
 			TreeNode *id = treeFirstChild(p);
 			assert(isSyntax(id, ID));
 			Symbol *symbol = symbolFind(id->text);
@@ -298,7 +300,7 @@ static Type* analyseExp(TreeNode* p) {
 				}
 				return symbol->func->retType;
 			}
-		} else {
+		} else { // ID
 			Symbol *symbol = symbolFind(first->text);
 			if (!symbol) {
 				semanticError(1, first->lineNo, first->text);
@@ -318,6 +320,22 @@ static Type* analyseExp(TreeNode* p) {
 			semanticError(10, first->lineNo, first->text);
 		if (!typeEqual(index, TYPE_INT))
 			semanticError(12, third->lineNo, first->text);
+	} else if (isSyntax(last, ID)) {
+		TreeNode *second = treeKthChild(p, 2);
+		assert(isSyntax(second, DOT));
+		Type* type = analyseExp(first);
+		char* fieldName = last->text;
+		if (type->kind != STRUCTURE) {
+			semanticError(13, second->lineNo, "");
+		} else {
+			ListHead *q;
+			listForeach(q, &type->structure) {
+				Field* field = listEntry(q, Field, list);
+				if (strcmp(field->name, fieldName) == 0) break;
+			}
+			if (q == &type->structure)
+				semanticError(14, last->lineNo, fieldName);
+		}
 	} else {
 		ListHead *q;
 		listForeach(q, &p->children) {
