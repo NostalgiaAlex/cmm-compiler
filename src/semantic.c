@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <symbol.h>
 #include "lib/Tree.h"
 #include "symbol.h"
 #define semanticError(errorNo, lineNo, ...) \
@@ -15,9 +16,9 @@ const char* str[] = {
 		"Undefined function \"%s\"",
 		"Redefined variable \"%s\"",
 		"Redefined function \"%s\"",
-		"",
-		"",
-		"",
+		"Type mismatched for assignment",
+		"The left-hand side of an assignment must be a variable",
+		"Type mismatched for operands",
 		"Type mismatched for return",
 		"Function \"%s(%s)\" is not applicable for arguments \"(%s)\"",
 		"\"%s\" is not an array",
@@ -160,7 +161,7 @@ static void analyseDecList(TreeNode* p, Type* type, ListHead* list) {
 	TreeNode *rest = treeLastChild(p);
 	Dec *varDec = analyseVarDec(treeFirstChild(dec), type);
 	if (list) {
-		if (fieldExist(list, varDec->name)) {
+		if (fieldFind(list, varDec->name) != NULL) {
 			semanticError(15, p->lineNo, varDec->name);
 		} else {
 			listAddBefore(list, &varDec->list);
@@ -292,13 +293,14 @@ static Val* analyseExp(TreeNode* p) {
 	assert(p != NULL);
 	assert(isSyntax(p, Exp));
 	TreeNode *first = treeFirstChild(p);
+	TreeNode *second = treeKthChild(p, 2);
 	TreeNode *last = treeLastChild(p);
 	Val *val = (Val*)malloc(sizeof(Val));
 	val->isVar = false;
 	val->type = NULL;
 	if (isSyntax(first, ID)) {
 		if (isSyntax(last, RP)) { // ID LP Args RP | ID LP RP
-			TreeNode *id = treeFirstChild(p);
+			TreeNode *id = first;
 			assert(isSyntax(id, ID));
 			Symbol *symbol = symbolFind(id->text);
 			if (!symbol) {
@@ -344,16 +346,34 @@ static Val* analyseExp(TreeNode* p) {
 			semanticError(10, first->lineNo, first->text);
 		if (!typeEqual(index->type, TYPE_INT))
 			semanticError(12, third->lineNo, first->text);
+		val->type = base->type->array.elem;
+		val->isVar = base->isVar;
+		return val;
 	} else if (isSyntax(last, ID)) { // EXP DOT ID
-		TreeNode *second = treeKthChild(p, 2);
 		assert(isSyntax(second, DOT));
 		Val *base = analyseExp(first);
-		char* fieldName = last->text;
+		char *fieldName = last->text;
 		if (base->type->kind != STRUCTURE) {
 			semanticError(13, second->lineNo, "");
-		} else if (!fieldExist(&base->type->structure, fieldName)) {
-			semanticError(14, last->lineNo, fieldName);
+		} else {
+			Field *field = fieldFind(&base->type->structure, fieldName);
+			if (field != NULL) {
+				val->isVar = base->isVar;
+				val->type = field->type;
+				return val;
+			} else {
+				semanticError(14, last->lineNo, fieldName);
+			}
 		}
+	} else if (isSyntax(second, ASSIGNOP)) {
+		Val* left = analyseExp(first);
+		Val* right = analyseExp(last);
+		if (!left->isVar) {
+			semanticError(6, first->lineNo, "");
+		} else if (!typeEqual(left->type, right->type)) {
+			semanticError(5, first->lineNo, "");
+		}
+		return left;
 	} else {
 		ListHead *q;
 		listForeach(q, &p->children) {

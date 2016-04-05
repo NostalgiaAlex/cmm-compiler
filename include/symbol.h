@@ -32,7 +32,7 @@ bool typeEqual(Type*, Type*);
 bool argsEqual(ListHead*, ListHead*);
 void typeToStr(Type*, char*);
 void argsToStr(ListHead*, char*);
-bool fieldExist(ListHead*, const char*);
+Field* fieldFind(ListHead*, const char*);
 
 typedef struct Symbol {
 	char* name;

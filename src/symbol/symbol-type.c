@@ -86,12 +86,12 @@ void argsToStr(ListHead* list, char* s) {
 	}
 }
 
-bool fieldExist(ListHead* structure, const char* fieldName) {
+Field* fieldFind(ListHead* structure, const char* fieldName) {
 	ListHead *p;
 	listForeach(p, structure) {
 		Field* field = listEntry(p, Field, list);
 		if (strcmp(field->name, fieldName) == 0)
-			return true;
+			return field;
 	}
-	return false;
+	return NULL;
 }
