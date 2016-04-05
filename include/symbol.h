@@ -30,6 +30,8 @@ extern Type *TYPE_INT, *TYPE_FLOAT;
 void typesInit();
 bool typeEqual(Type*, Type*);
 bool argsEqual(ListHead*, ListHead*);
+void typeToStr(Type*, char*);
+void argsToStr(ListHead*, char*);
 
 typedef struct Symbol {
 	char* name;

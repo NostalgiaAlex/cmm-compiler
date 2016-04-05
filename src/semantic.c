@@ -19,7 +19,7 @@ const char* str[] = {
 		"",
 		"",
 		"Type mismatched for return",
-		"Function is not applicable for arguments \"(int, int)\"",
+		"Function \"%s(%s)\" is not applicable for arguments \"(%s)\"",
 		"",
 		"\"%s\" is not a function",
 		"",
@@ -289,9 +289,12 @@ static Type* analyseExp(TreeNode* p) {
 				TreeNode *args = treeKthChild(p, 3);
 				if (isSyntax(args, Args))
 					analyseArgs(args, &list);
-				if (!argsEqual(&list, &symbol->func->args))
-					semanticError(9, id->lineNo, "");
-				// TODO: error log Detail
+				if (!argsEqual(&list, &symbol->func->args)) {
+					char paramsStr[32], argsStr[32];
+					argsToStr(&symbol->func->args, paramsStr);
+					argsToStr(&list, argsStr);
+					semanticError(9, id->lineNo, symbol->name, paramsStr, argsStr);
+				}
 				return symbol->func->retType;
 			}
 		} else {

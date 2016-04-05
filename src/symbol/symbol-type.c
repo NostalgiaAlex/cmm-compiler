@@ -1,8 +1,8 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
-#include "lib/Tree.h"
-#include "symbol.h"
+#include <symbol.h>
+#include <stdio.h>
 
 Type *TYPE_INT, *TYPE_FLOAT;
 void typesInit() {
@@ -47,4 +47,42 @@ bool argsEqual(ListHead* a, ListHead* b) {
 		p = p->next; q = q->next;
 	}
 	return (p == a) && (q == b);
+}
+
+static void typeArrayToStr(Type* type, char* s) {
+	if (type->kind == ARRAY) {
+		sprintf(s, "[%d]", type->array.size);
+		s += strlen(s);
+		typeArrayToStr(type->array.elem, s);
+	}
+}
+static Type* baseType(Type* type) {
+	if (type->kind != ARRAY) return type;
+	return baseType(type->array.elem);
+}
+void typeToStr(Type* type, char* s) {
+	if (typeEqual(type, TYPE_INT)) {
+		strcpy(s, "int");
+	} else if (typeEqual(type, TYPE_FLOAT)) {
+		strcpy(s, "float");
+	} else if (type->kind == ARRAY) {
+		typeToStr(baseType(type), s);
+		s += strlen(s);
+		typeArrayToStr(type, s);
+	} else if (type->kind == STRUCTURE) {
+		strcpy(s, "struct");
+	}
+}
+
+void argsToStr(ListHead* list, char* s) {
+	ListHead *p;
+	listForeach(p, list) {
+		Arg *arg = listEntry(p, Arg, list);
+		if (p != list->next) {
+			strcpy(s, ", ");
+			s += 2;
+		}
+		typeToStr(arg->type, s);
+		s += strlen(s);
+	}
 }
