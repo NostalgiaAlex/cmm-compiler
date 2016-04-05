@@ -8,11 +8,22 @@ TreeNode* createTree(int airty, ...) {
 	va_start(ap, airty);
 	TreeNode *root = newNode();
 	root->isToken = false;
-	int i;
+	size_t i, len = 0;
 	for (i = 0; i < airty; i++) {
 		TreeNode *p = va_arg(ap, TreeNode*);
 		if (i == 0) root->lineNo = p->lineNo;
-		if (p != NULL) treeAddChild(root, p);
+		if (p != NULL) {
+			treeAddChild(root, p);
+			len += 1+strlen(p->text);
+		}
+	}
+	ListHead *q;
+	char *s = root->text = malloc(len);
+	listForeach(q, &root->children) {
+		TreeNode *p = listEntry(q, TreeNode, list);
+		if (q != root->children.next) *(s++) = ' ';
+		strcpy(s, p->text);
+		s += strlen(s);
 	}
 	va_end(ap);
 	return root;

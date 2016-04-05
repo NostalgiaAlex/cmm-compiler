@@ -20,9 +20,9 @@ const char* str[] = {
 		"",
 		"Type mismatched for return",
 		"Function \"%s(%s)\" is not applicable for arguments \"(%s)\"",
-		"",
+		"\"%s\" is not an array",
 		"\"%s\" is not a function",
-		"",
+		"\"%s\" is not an integer",
 };
 
 typedef Field Dec;
@@ -274,8 +274,9 @@ static Type* analyseExp(TreeNode* p) {
 	assert(p != NULL);
 	assert(isSyntax(p, Exp));
 	TreeNode *first = treeFirstChild(p);
+	TreeNode *last = treeLastChild(p);
 	if (isSyntax(first, ID)) {
-		if (isSyntax(treeLastChild(p), RP)) {
+		if (isSyntax(last, RP)) {
 			TreeNode *id = treeFirstChild(p);
 			assert(isSyntax(id, ID));
 			Symbol *symbol = symbolFind(id->text);
@@ -309,6 +310,14 @@ static Type* analyseExp(TreeNode* p) {
 		return TYPE_INT;
 	} else if (isSyntax(first, FLOAT)) {
 		return TYPE_FLOAT;
+	} else if (isSyntax(last, RB)) {
+		TreeNode *third = treeKthChild(p, 3);
+		Type *base = analyseExp(first);
+		Type *index = analyseExp(third);
+		if (base->kind != ARRAY)
+			semanticError(10, first->lineNo, first->text);
+		if (!typeEqual(index, TYPE_INT))
+			semanticError(12, third->lineNo, first->text);
 	} else {
 		ListHead *q;
 		listForeach(q, &p->children) {
