@@ -28,10 +28,23 @@ bool typeEqual(Type* a, Type* b) {
 			p = a->structure.next;
 			q = b->structure.next;
 			while ((p != &a->structure)&&(q != &a->structure)) {
-				if (!typeEqual(listEntry(p, Field, list)->type,
-							listEntry(q, Field, list)->type)) return false;
+				Type * typeP = listEntry(p, Field, list)->type;
+				Type * typeQ = listEntry(q, Field, list)->type;
+				if (!typeEqual(typeP, typeQ)) return false;
 			}
 			return (p == &a->structure)&&(q == &b->structure);
 	}
 	return false;
+}
+
+bool argsEqual(ListHead* a, ListHead* b) {
+	ListHead *p = a->next, *q = b->next;
+	while ((p != a) && (q != b)) {
+		Arg *argP = listEntry(p, Arg, list);
+		Arg *argQ = listEntry(q, Arg, list);
+		if (!typeEqual(argP->type, argQ->type))
+			return false;
+		p = p->next; q = q->next;
+	}
+	return (p == a) && (q == b);
 }

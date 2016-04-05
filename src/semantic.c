@@ -19,7 +19,7 @@ const char* str[] = {
 		"",
 		"",
 		"Type mismatched for return",
-		"",
+		"Function is not applicable for arguments \"(int, int)\"",
 		"",
 		"\"%s\" is not a function",
 		"",
@@ -41,6 +41,7 @@ static Arg* analyseParamDec(TreeNode*);
 static void analyseStmtList(TreeNode*);
 static void analyseStmt(TreeNode*);
 static Type* analyseExp(TreeNode*);
+static void analyseArgs(TreeNode*, ListHead*);
 static void analyseCompSt(TreeNode*, Func*);
 
 static void analyseExtDefList(TreeNode* p) {
@@ -272,25 +273,39 @@ static void analyseStmt(TreeNode* p) {
 static Type* analyseExp(TreeNode* p) {
 	assert(p != NULL);
 	assert(isSyntax(p, Exp));
-	if (isSyntax(treeLastChild(p), RP)) {
-		TreeNode *id = treeFirstChild(p);
-		assert(isSyntax(id, ID));
-		Symbol *symbol = symbolFind(id->text);
-		if (!symbol) {
-			semanticError(2, id->lineNo, id->text);
-		} else if (symbol->kind != FUNC) {
-			semanticError(11, id->lineNo, id->text);
+	TreeNode *first = treeFirstChild(p);
+	if (isSyntax(first, ID)) {
+		if (isSyntax(treeLastChild(p), RP)) {
+			TreeNode *id = treeFirstChild(p);
+			assert(isSyntax(id, ID));
+			Symbol *symbol = symbolFind(id->text);
+			if (!symbol) {
+				semanticError(2, id->lineNo, id->text);
+			} else if (symbol->kind != FUNC) {
+				semanticError(11, id->lineNo, id->text);
+			} else {
+				ListHead list;
+				listInit(&list);
+				TreeNode *args = treeKthChild(p, 3);
+				if (isSyntax(args, Args))
+					analyseArgs(args, &list);
+				if (!argsEqual(&list, &symbol->func->args))
+					semanticError(9, id->lineNo, "");
+				// TODO: error log Detail
+				return symbol->func->retType;
+			}
 		} else {
-			return symbol->func->retType;
+			Symbol *symbol = symbolFind(first->text);
+			if (!symbol) {
+				semanticError(1, first->lineNo, first->text);
+			} else {
+				return symbol->type;
+			}
 		}
-	} else if (isSyntax(treeFirstChild(p), ID)) {
-		TreeNode *id = treeFirstChild(p);
-		Symbol* symbol = symbolFind(id->text);
-		if (!symbol) {
-			semanticError(1, id->lineNo, id->text);
-		} else {
-			return symbol->type;
-		}
+	} else if (isSyntax(first, INT)) {
+		return TYPE_INT;
+	} else if (isSyntax(first, FLOAT)) {
+		return TYPE_FLOAT;
 	} else {
 		ListHead *q;
 		listForeach(q, &p->children) {
@@ -299,6 +314,19 @@ static Type* analyseExp(TreeNode* p) {
 		}
 	}
 	return NULL;
+}
+
+static void analyseArgs(TreeNode* p, ListHead* list) {
+	assert(p != NULL);
+	assert(isSyntax(p, Args));
+	TreeNode *exp = treeFirstChild(p);
+	TreeNode *rest = treeLastChild(p);
+	Arg *arg = (Arg*)malloc(sizeof(Arg));
+	arg->type = analyseExp(exp);
+	listAddBefore(list, &arg->list);
+	if (isSyntax(rest, Args))
+		analyseArgs(rest, list);
+
 }
 
 void analyseProgram(TreeNode* p) {

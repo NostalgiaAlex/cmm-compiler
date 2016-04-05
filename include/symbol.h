@@ -29,6 +29,7 @@ typedef Field Arg;
 extern Type *TYPE_INT, *TYPE_FLOAT;
 void typesInit();
 bool typeEqual(Type*, Type*);
+bool argsEqual(ListHead*, ListHead*);
 
 typedef struct Symbol {
 	char* name;
