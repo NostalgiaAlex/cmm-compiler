@@ -18,7 +18,7 @@ const char* str[] = {
 		"",
 		"",
 		"",
-		"",
+		"Type mismatched for return",
 		"",
 		"",
 		"\"%s\" is not a function",
@@ -27,6 +27,7 @@ const char* str[] = {
 
 typedef Field Dec;
 
+static Type* retType;
 static Type* analyseSpecifier(TreeNode*);
 static void analyseExtDecList(TreeNode *, Type*);
 static void analyseExtDef(TreeNode*);
@@ -34,14 +35,13 @@ static void analyseDefList(TreeNode*, ListHead*);
 static void analyseDef(TreeNode*, ListHead*);
 static void analyseDecList(TreeNode*, Type*, ListHead*);
 static Dec* analyseVarDec(TreeNode*, Type*);
-static void analyseFunDec(TreeNode*, Type*);
+static Func* analyseFunDec(TreeNode*, Type*);
 static void analyseVarList(TreeNode*, Func*);
 static Arg* analyseParamDec(TreeNode*);
 static void analyseStmtList(TreeNode*);
 static void analyseStmt(TreeNode*);
 static Type* analyseExp(TreeNode*);
-
-static void analyseCompSt(TreeNode* p) ;
+static void analyseCompSt(TreeNode*, Func*);
 
 static void analyseExtDefList(TreeNode* p) {
 	assert(p != NULL);
@@ -60,8 +60,9 @@ static void analyseExtDef(TreeNode *p) {
 	if (isSyntax(second, ExtDecList)) {
 		analyseExtDecList(second, type);
 	} else if (isSyntax(second, FunDec)) {
-		analyseFunDec(second, type);
-		analyseCompSt(treeKthChild(p, 3));
+		Func* func = analyseFunDec(second, type);
+		retType = func->retType;
+		analyseCompSt(treeKthChild(p, 3), func);
 	}
 }
 
@@ -179,7 +180,7 @@ static Dec* analyseVarDec(TreeNode* p, Type* type) {
 	}
 }
 
-static void analyseFunDec(TreeNode* p, Type* type) {
+static Func* analyseFunDec(TreeNode* p, Type* type) {
 	assert(p != NULL);
 	assert(isSyntax(p, FunDec));
 	Func *func = (Func*)malloc(sizeof(Func));
@@ -197,6 +198,7 @@ static void analyseFunDec(TreeNode* p, Type* type) {
 	symbol->func = func;
 	if (!symbolInsert(symbol))
 		semanticError(4, id->lineNo, symbol->name);
+	return symbol->func;
 }
 
 static void analyseVarList(TreeNode* p, Func* func) {
@@ -217,10 +219,19 @@ static Arg* analyseParamDec(TreeNode* p) {
 	return analyseVarDec(treeLastChild(p), type);
 }
 
-static void analyseCompSt(TreeNode* p) {
+static void analyseCompSt(TreeNode* p, Func* func) {
 	assert(p != NULL);
 	assert(isSyntax(p, CompSt));
 	symbolsStackPush();
+	ListHead *q;
+	listForeach(q, &func->args) {
+		Arg *arg = listEntry(q, Arg, list);
+		Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
+		symbol->name = arg->name;
+		symbol->kind = VAR;
+		symbol->type = arg->type;
+		symbolInsert(symbol);
+	}
 	TreeNode *next = treeKthChild(p, 2);
 	if (isSyntax(next, DefList)) {
 		analyseDefList(next, NULL);
@@ -244,11 +255,17 @@ static void analyseStmt(TreeNode* p) {
 	assert(p != NULL);
 	assert(isSyntax(p, Stmt));
 	ListHead *q;
-	listForeach(q, &p->children) {
-		TreeNode *r = listEntry(q, TreeNode, list);
-		if (isSyntax(r, Stmt)) analyseStmt(r);
-		else if (isSyntax(r, CompSt)) analyseCompSt(r);
-		else if (isSyntax(r, Exp)) analyseExp(r);
+	if (isSyntax(treeFirstChild(p), RETURN)) {
+		Type* type = analyseExp(treeKthChild(p, 2));
+		if (!typeEqual(type, retType))
+			semanticError(8, p->lineNo, "");
+	} else {
+		listForeach(q, &p->children) {
+			TreeNode *r = listEntry(q, TreeNode, list);
+			if (isSyntax(r, Stmt)) analyseStmt(r);
+			else if (isSyntax(r, CompSt)) analyseCompSt(r, NULL);
+			else if (isSyntax(r, Exp)) analyseExp(r);
+		}
 	}
 }
 
@@ -266,19 +283,19 @@ static Type* analyseExp(TreeNode* p) {
 		} else {
 			return symbol->func->retType;
 		}
+	} else if (isSyntax(treeFirstChild(p), ID)) {
+		TreeNode *id = treeFirstChild(p);
+		Symbol* symbol = symbolFind(id->text);
+		if (!symbol) {
+			semanticError(1, id->lineNo, id->text);
+		} else {
+			return symbol->type;
+		}
 	} else {
 		ListHead *q;
 		listForeach(q, &p->children) {
 			TreeNode *r = listEntry(q, TreeNode, list);
 			if (isSyntax(r, Exp)) analyseExp(r);
-			else if (isSyntax(r, ID)) {
-				Symbol* symbol = symbolFind(r->text);
-				if (!symbol) {
-					semanticError(1, r->lineNo, r->text);
-				} else {
-					return symbol->type;
-				}
-			}
 		}
 	}
 	return NULL;
