@@ -53,7 +53,7 @@ typedef struct Val {
 	Type* type;
 	bool isVar;
 } Val;
-static Val* analyseExp(TreeNode*);
+static Val analyseExp(TreeNode*);
 
 static void analyseExtDefList(TreeNode* p) {
 	assert(p != NULL);
@@ -271,33 +271,63 @@ static void analyseStmtList(TreeNode* p) {
 		analyseStmtList(rest);
 }
 
+static Val requireEqual(TreeNode*, Type*, int);
 static void analyseStmt(TreeNode* p) {
 	assert(p != NULL);
 	assert(isSyntax(p, Stmt));
-	ListHead *q;
-	if (isSyntax(treeFirstChild(p), RETURN)) {
-		Type* type = analyseExp(treeKthChild(p, 2))->type;
+	TreeNode *first = treeFirstChild(p);
+	if (isSyntax(first, RETURN)) {
+		Type *type = analyseExp(treeKthChild(p, 2)).type;
 		if (!typeEqual(type, retType))
 			semanticError(8, p->lineNo, "");
+	} else if (isSyntax(first, Exp)) {
+		analyseExp(first);
 	} else {
+		ListHead *q;
 		listForeach(q, &p->children) {
 			TreeNode *r = listEntry(q, TreeNode, list);
 			if (isSyntax(r, Stmt)) analyseStmt(r);
 			else if (isSyntax(r, CompSt)) analyseCompSt(r, NULL);
-			else if (isSyntax(r, Exp)) analyseExp(r);
+			else if (isSyntax(r, Exp)) {
+				requireEqual(r, TYPE_INT, 7);
+			}
 		}
 	}
 }
 
-static Val* analyseExp(TreeNode* p) {
+static Val makeVar(Type* type) {
+	Val val;
+	val.type = type;
+	val.isVar = true;
+	return val;
+}
+static Val makeVal(Type* type) {
+	Val val;
+	val.type = type;
+	val.isVar = false;
+	return val;
+}
+static Val requireBasic(TreeNode* p, int errorNo) {
+	Val val = analyseExp(p);
+	if ((val.type != NULL)&&(val.type->kind != BASIC)) {
+		semanticError(errorNo, p->lineNo, p->text);
+	}
+	return val;
+}
+static Val requireEqual(TreeNode* p, Type* type, int errorNo) {
+	Val val = analyseExp(p);
+	if ((val.type != NULL)&&(!typeEqual(val.type, type))) {
+		semanticError(errorNo, p->lineNo, p->text);
+	}
+	return val;
+}
+#define check(val) do { if (val.type == NULL) return makeVal(NULL); } while (0)
+static Val analyseExp(TreeNode* p) {
 	assert(p != NULL);
 	assert(isSyntax(p, Exp));
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *second = treeKthChild(p, 2);
 	TreeNode *last = treeLastChild(p);
-	Val *val = (Val*)malloc(sizeof(Val));
-	val->isVar = false;
-	val->type = NULL;
 	if (isSyntax(first, ID)) {
 		if (isSyntax(last, RP)) { // ID LP Args RP | ID LP RP
 			TreeNode *id = first;
@@ -319,82 +349,98 @@ static Val* analyseExp(TreeNode* p) {
 					argsToStr(&list, argsStr);
 					semanticError(9, id->lineNo, symbol->name, paramsStr, argsStr);
 				}
-				val->type = symbol->func->retType;
-				return val;
+				return makeVal(symbol->func->retType);
 			}
 		} else { // ID
 			Symbol *symbol = symbolFind(first->text);
 			if (!symbol) {
 				semanticError(1, first->lineNo, first->text);
 			} else {
-				val->type = symbol->type;
-				val->isVar = true;
-				return val;
+				return makeVar(symbol->type);
 			}
 		}
 	} else if (isSyntax(first, INT)) {
-		val->type = TYPE_INT;
-		return val;
+		return makeVal(TYPE_INT);
 	} else if (isSyntax(first, FLOAT)) {
-		val->type = TYPE_FLOAT;
-		return val;
+		return makeVal(TYPE_FLOAT);
 	} else if (isSyntax(last, RB)) { // EXP LB EXP RB
 		TreeNode *third = treeKthChild(p, 3);
-		Val *base = analyseExp(first);
-		Val *index = analyseExp(third);
-		if (base->type->kind != ARRAY)
+		Val base = analyseExp(first);
+		Val index = requireEqual(third, TYPE_INT, 12);
+		check(base);
+		check(index);
+		if (base.type->kind != ARRAY) {
 			semanticError(10, first->lineNo, first->text);
-		if (!typeEqual(index->type, TYPE_INT))
-			semanticError(12, third->lineNo, first->text);
-		val->type = base->type->array.elem;
-		val->isVar = base->isVar;
-		return val;
+		} else {
+			base.type = base.type->array.elem;
+			return base;
+		}
 	} else if (isSyntax(last, ID)) { // EXP DOT ID
 		assert(isSyntax(second, DOT));
-		Val *base = analyseExp(first);
+		Val base = analyseExp(first);
+		check(base);
 		char *fieldName = last->text;
-		if (base->type->kind != STRUCTURE) {
+		if (base.type->kind != STRUCTURE) {
 			semanticError(13, second->lineNo, "");
 		} else {
-			Field *field = fieldFind(&base->type->structure, fieldName);
-			if (field != NULL) {
-				val->isVar = base->isVar;
-				val->type = field->type;
-				return val;
-			} else {
+			Field *field = fieldFind(&base.type->structure, fieldName);
+			if (field == NULL) {
 				semanticError(14, last->lineNo, fieldName);
+			} else {
+				base.type = field->type;
+				return base;
 			}
 		}
 	} else if (isSyntax(second, ASSIGNOP)) {
-		Val* left = analyseExp(first);
-		Val* right = analyseExp(last);
-		if (!left->isVar) {
+		Val left = analyseExp(first);
+		check(left);
+		if (!left.isVar) {
 			semanticError(6, first->lineNo, "");
-		} else if (!typeEqual(left->type, right->type)) {
-			semanticError(5, first->lineNo, "");
+		} else {
+			Val right = requireEqual(last, left.type, 5);
+			check(right);
+			return left;
 		}
-		return left;
+	} else if (isSyntax(first, LP) && isSyntax(last, RP)) {
+		return analyseExp(second);
+	} else if (last == second) {
+		Val val;
+		if (isSyntax(first, NOT)) {
+			val = requireEqual(second, TYPE_INT, 7);
+		} else {
+			assert(isSyntax(first, MINUS));
+			val = requireBasic(second, 7);
+		}
+		check(val);
+		return val;
+	} else if (isSyntax(second, AND)||isSyntax(second, OR)) {
+		Val left = requireEqual(first, TYPE_INT, 7);
+		Val right = requireEqual(last, TYPE_INT, 7);
+		check(left);
+		check(right);
+		return makeVal(TYPE_INT);
 	} else {
-		ListHead *q;
-		listForeach(q, &p->children) {
-			TreeNode *r = listEntry(q, TreeNode, list);
-			if (isSyntax(r, Exp)) analyseExp(r);
-		}
+		Val left = requireBasic(first, 7);
+		check(left);
+		Val right = requireEqual(last, left.type, 7);
+		check(right);
+		return left;
+
 	}
-	return NULL;
+	return makeVal(NULL);
 }
 
 static void analyseArgs(TreeNode* p, ListHead* list) {
+	assert(list != NULL);
 	assert(p != NULL);
 	assert(isSyntax(p, Args));
 	TreeNode *exp = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
 	Arg *arg = (Arg*)malloc(sizeof(Arg));
-	arg->type = analyseExp(exp)->type;
+	arg->type = analyseExp(exp).type;
 	listAddBefore(list, &arg->list);
 	if (isSyntax(rest, Args))
 		analyseArgs(rest, list);
-
 }
 
 void analyseProgram(TreeNode* p) {
