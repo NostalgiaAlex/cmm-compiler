@@ -7,11 +7,10 @@
 #define semanticError(errorNo, lineNo, ...) \
 do { \
 	printf("Error type %d at Line %d: ", (errorNo), (lineNo)); \
-	printf(str[errorNo], __VA_ARGS__);\
+	printf(str[(errorNo)-1], __VA_ARGS__);\
 	puts(".");\
 } while (0)
 const char* str[] = {
-		"",
 		"Undefined variable \"%s\"",
 		"Undefined function \"%s\"",
 		"Redefined variable \"%s\"",
@@ -35,8 +34,8 @@ typedef Field Dec;
 
 static Type* retType;
 static Type* analyseSpecifier(TreeNode*);
-static void analyseExtDecList(TreeNode *, Type*);
 static void analyseExtDef(TreeNode*);
+static void analyseExtDecList(TreeNode *, Type*);
 static void analyseDefList(TreeNode*, ListHead*);
 static void analyseDef(TreeNode*, ListHead*);
 static void analyseDecList(TreeNode*, Type*, ListHead*);
@@ -81,16 +80,16 @@ static void analyseExtDef(TreeNode *p) {
 static void analyseExtDecList(TreeNode *p, Type *type) {
 	assert(p != NULL);
 	assert(isSyntax(p, ExtDecList));
-	TreeNode *extDec = treeFirstChild(p);
+	TreeNode *first = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
-	Dec *varDec = analyseVarDec(treeFirstChild(extDec), type);
+	Dec *varDec = analyseVarDec(first, type);
 	Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
 	symbol->name = toArray(varDec->name);
 	symbol->kind = VAR;
 	symbol->type = type;
 	if (!symbolInsert(symbol))
-		semanticError(3, extDec->lineNo, symbol->name);
-	if (isSyntax(rest, DecList))
+		semanticError(3, first->lineNo, symbol->name);
+	if (isSyntax(rest, ExtDecList))
 		analyseExtDecList(rest, type);
 }
 
@@ -166,8 +165,6 @@ static void analyseDecList(TreeNode* p, Type* type, ListHead* list) {
 		} else {
 			listAddBefore(list, &varDec->list);
 		}
-		if (isSyntax(rest, DecList))
-			analyseDecList(rest, type, list);
 	} else {
 		Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
 		symbol->name = varDec->name;
@@ -177,6 +174,8 @@ static void analyseDecList(TreeNode* p, Type* type, ListHead* list) {
 			semanticError(3, p->lineNo, symbol->name);
 		free(varDec);
 	}
+	if (isSyntax(rest, DecList))
+		analyseDecList(rest, type, list);
 }
 
 static Dec* analyseVarDec(TreeNode* p, Type* type) {
@@ -271,7 +270,7 @@ static void analyseStmtList(TreeNode* p) {
 		analyseStmtList(rest);
 }
 
-static Val requireEqual(TreeNode*, Type*, int);
+static Val requireType(TreeNode *, Type *, int);
 static void analyseStmt(TreeNode* p) {
 	assert(p != NULL);
 	assert(isSyntax(p, Stmt));
@@ -289,7 +288,7 @@ static void analyseStmt(TreeNode* p) {
 			if (isSyntax(r, Stmt)) analyseStmt(r);
 			else if (isSyntax(r, CompSt)) analyseCompSt(r, NULL);
 			else if (isSyntax(r, Exp)) {
-				requireEqual(r, TYPE_INT, 7);
+				requireType(r, TYPE_INT, 7);
 			}
 		}
 	}
@@ -314,7 +313,7 @@ static Val requireBasic(TreeNode* p, int errorNo) {
 	}
 	return val;
 }
-static Val requireEqual(TreeNode* p, Type* type, int errorNo) {
+static Val requireType(TreeNode *p, Type *type, int errorNo) {
 	Val val = analyseExp(p);
 	if ((val.type != NULL)&&(!typeEqual(val.type, type))) {
 		semanticError(errorNo, p->lineNo, p->text);
@@ -366,7 +365,7 @@ static Val analyseExp(TreeNode* p) {
 	} else if (isSyntax(last, RB)) { // EXP LB EXP RB
 		TreeNode *third = treeKthChild(p, 3);
 		Val base = analyseExp(first);
-		Val index = requireEqual(third, TYPE_INT, 12);
+		Val index = requireType(third, TYPE_INT, 12);
 		check(base);
 		check(index);
 		if (base.type->kind != ARRAY) {
@@ -397,7 +396,7 @@ static Val analyseExp(TreeNode* p) {
 		if (!left.isVar) {
 			semanticError(6, first->lineNo, "");
 		} else {
-			Val right = requireEqual(last, left.type, 5);
+			Val right = requireType(last, left.type, 5);
 			check(right);
 			return left;
 		}
@@ -406,7 +405,7 @@ static Val analyseExp(TreeNode* p) {
 	} else if (last == second) {
 		Val val;
 		if (isSyntax(first, NOT)) {
-			val = requireEqual(second, TYPE_INT, 7);
+			val = requireType(second, TYPE_INT, 7);
 		} else {
 			assert(isSyntax(first, MINUS));
 			val = requireBasic(second, 7);
@@ -414,18 +413,17 @@ static Val analyseExp(TreeNode* p) {
 		check(val);
 		return val;
 	} else if (isSyntax(second, AND)||isSyntax(second, OR)) {
-		Val left = requireEqual(first, TYPE_INT, 7);
-		Val right = requireEqual(last, TYPE_INT, 7);
+		Val left = requireType(first, TYPE_INT, 7);
+		Val right = requireType(last, TYPE_INT, 7);
 		check(left);
 		check(right);
 		return makeVal(TYPE_INT);
 	} else {
 		Val left = requireBasic(first, 7);
 		check(left);
-		Val right = requireEqual(last, left.type, 7);
+		Val right = requireType(last, left.type, 7);
 		check(right);
-		return left;
-
+		return makeVal(left.type);
 	}
 	return makeVal(NULL);
 }
