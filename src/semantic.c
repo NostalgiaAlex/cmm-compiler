@@ -24,7 +24,7 @@ const char* str[] = {
 		"\"%s\" is not an integer",
 		"Illegal use of \".\"",
 		"Non-existent field \"%s\"",
-		"Redefined field \"%s\"",
+		"Redefined or initialized field \"%s\"",
 		"Duplicated name \"%s\"",
 		"Undefined structure \"%s\"",
 		"Undefined function \"%s\"",
@@ -39,6 +39,7 @@ static void analyseExtDecList(TreeNode *, Type*);
 static void analyseDefList(TreeNode*, ListHead*);
 static void analyseDef(TreeNode*, ListHead*);
 static void analyseDecList(TreeNode*, Type*, ListHead*);
+static void analyseDec(TreeNode*, Type*, ListHead*);
 static Dec* analyseVarDec(TreeNode*, Type*);
 static Func* analyseFunDec(TreeNode*, Type*);
 static void analyseVarList(TreeNode*, ListHead*);
@@ -167,24 +168,39 @@ static void analyseDecList(TreeNode* p, Type* type, ListHead* list) {
 	assert(isSyntax(p, DecList));
 	TreeNode *dec = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
-	Dec *varDec = analyseVarDec(treeFirstChild(dec), type);
+	analyseDec(dec, type, list);
+	if (isSyntax(rest, DecList))
+		analyseDecList(rest, type, list);
+}
+
+static void analyseDec(TreeNode* p, Type* type, ListHead* list) {
+	assert(p != NULL);
+	assert(isSyntax(p, Dec));
+	TreeNode *first = treeFirstChild(p);
+	TreeNode *last = treeLastChild(p);
+	Dec *varDec = analyseVarDec(first, type);
 	if (list) {
 		if (fieldFind(list, varDec->name) != NULL) {
 			semanticError(15, p->lineNo, varDec->name);
 		} else {
 			listAddBefore(list, &varDec->list);
 		}
+		if (isSyntax(last, Exp))
+			semanticError(15, p->lineNo, varDec->name);
 	} else {
 		Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
 		symbol->name = varDec->name;
 		symbol->kind = VAR;
 		symbol->type = varDec->type;
-		if (!symbolInsert(symbol))
+		if (!symbolInsert(symbol)) {
 			semanticError(3, p->lineNo, symbol->name);
+		} else if (isSyntax(last, Exp)) {
+			Val val = analyseExp(last);
+			if ((val.type != NULL)&&(!typeEqual(val.type, symbol->type)))
+				semanticError(5, treeKthChild(p, 2)->lineNo, "");
+		}
 		free(varDec);
 	}
-	if (isSyntax(rest, DecList))
-		analyseDecList(rest, type, list);
 }
 
 static Dec* analyseVarDec(TreeNode* p, Type* type) {
@@ -217,6 +233,7 @@ ListHead funSymbols;
 static Func* analyseFunDec(TreeNode* p, Type* type) {
 	assert(p != NULL);
 	assert(isSyntax(p, FunDec));
+	assert(type != NULL);
 	Func *func = (Func*)malloc(sizeof(Func));
 	func->retType = type;
 	func->defined = false;
@@ -243,7 +260,11 @@ static Func* analyseFunDec(TreeNode* p, Type* type) {
 		if (isSyntax(varList, VarList))
 			analyseVarList(varList, &func->args);
 		if (funcEqual(symbol->func, func)) {
-			if (symbol->func != func) releaseFunc(func);
+			if (symbol->func != func) {
+				func->defined = symbol->func->defined;
+				releaseFunc(symbol->func);
+				symbol->func = func;
+			}
 			return symbol->func;
 		} else {
 			releaseFunc(func);
@@ -275,13 +296,15 @@ static void analyseCompSt(TreeNode* p, Func* func) {
 	assert(isSyntax(p, CompSt));
 	symbolsStackPush();
 	ListHead *q;
-	listForeach(q, &func->args) {
-		Arg *arg = listEntry(q, Arg, list);
-		Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
-		symbol->name = arg->name;
-		symbol->kind = VAR;
-		symbol->type = arg->type;
-		symbolInsert(symbol);
+	if (func != NULL) {
+		listForeach(q, &func->args) {
+			Arg *arg = listEntry(q, Arg, list);
+			Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
+			symbol->name = toArray(arg->name);
+			symbol->kind = VAR;
+			symbol->type = arg->type;
+			symbolInsert(symbol);
+		}
 	}
 	TreeNode *next = treeKthChild(p, 2);
 	if (isSyntax(next, DefList)) {
@@ -309,7 +332,7 @@ static void analyseStmt(TreeNode* p) {
 	TreeNode *first = treeFirstChild(p);
 	if (isSyntax(first, RETURN)) {
 		Type *type = analyseExp(treeKthChild(p, 2)).type;
-		if (!typeEqual(type, retType))
+		if ((type != NULL)&&(!typeEqual(type, retType)))
 			semanticError(8, p->lineNo, "");
 	} else if (isSyntax(first, Exp)) {
 		analyseExp(first);
@@ -380,6 +403,7 @@ static Val analyseExp(TreeNode* p) {
 					argsToStr(&list, argsStr);
 					semanticError(9, id->lineNo, symbol->name, paramsStr, argsStr);
 				}
+				releaseArgs(&list);
 				return makeVal(symbol->func->retType);
 			}
 		} else { // ID
@@ -468,6 +492,7 @@ static void analyseArgs(TreeNode* p, ListHead* list) {
 	TreeNode *rest = treeLastChild(p);
 	Arg *arg = (Arg*)malloc(sizeof(Arg));
 	arg->type = analyseExp(exp).type;
+	arg->name = NULL;
 	listAddBefore(list, &arg->list);
 	if (isSyntax(rest, Args))
 		analyseArgs(rest, list);

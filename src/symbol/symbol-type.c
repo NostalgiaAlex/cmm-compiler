@@ -38,6 +38,8 @@ bool typeEqual(Type* a, Type* b) {
 	return false;
 }
 bool argsEqual(ListHead* a, ListHead* b) {
+	assert(a != NULL);
+	assert(b != NULL);
 	ListHead *p = a->next, *q = b->next;
 	while ((p != a) && (q != b)) {
 		Arg *argP = listEntry(p, Arg, list);
@@ -49,17 +51,22 @@ bool argsEqual(ListHead* a, ListHead* b) {
 	return (p == a) && (q == b);
 }
 bool funcEqual(Func* a, Func* b) {
+	assert(a != NULL);
+	assert(b != NULL);
 	return (typeEqual(a->retType, b->retType) &&
 			argsEqual(&a->args, &b->args));
 }
 
-void releaseFunc(Func *func) {
-	while (!listIsEmpty(&func->args)) {
-		Arg* arg = listEntry(func->args.next, Arg, list);
+void releaseArgs(ListHead* args) {
+	while (!listIsEmpty(args)) {
+		Arg* arg = listEntry(args->next, Arg, list);
 		listDelete(&arg->list);
-		free(arg->name);
+		if (arg->name != NULL) free(arg->name);
 		free(arg);
 	}
+}
+void releaseFunc(Func *func) {
+	releaseArgs(&func->args);
 	free(func);
 }
 

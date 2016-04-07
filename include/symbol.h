@@ -31,6 +31,7 @@ void typesInit();
 bool typeEqual(Type*, Type*);
 bool argsEqual(ListHead*, ListHead*);
 bool funcEqual(Func*, Func*);
+void releaseArgs(ListHead* args);
 void releaseFunc(Func*);
 void typeToStr(Type*, char*);
 void argsToStr(ListHead*, char*);
