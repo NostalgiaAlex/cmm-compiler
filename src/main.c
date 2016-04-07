@@ -1,7 +1,11 @@
-#include "symbol.h"
 #include <stdio.h>
+#include "syntax-tree.h"
+#include "symbol.h"
+
 void yyrestart(FILE*);
 void yyparse();
+void print(TreeNode*, int);
+
 int main(int argc, char* argv[]) {
     symbolTableInit();
 	typesInit();
@@ -10,5 +14,9 @@ int main(int argc, char* argv[]) {
 	if (!f) return 1;
 	yyrestart(f);
 	yyparse();
+	if (root != NULL) {
+//		print(root, 0);
+		analyseProgram(root);
+	}
 	return 0;
 }

@@ -3,7 +3,6 @@
 #include <assert.h>
 #include "lib/List.h"
 #include "symbol.h"
-#include "stdio.h"
 
 #define MASK     0x3FFF
 #define SIZE     (MASK+1)

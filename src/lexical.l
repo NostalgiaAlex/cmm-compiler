@@ -1,8 +1,8 @@
 %{
 #include <string.h>
+#include "syntax-tree.h"
 #include "common.h"
 #include "macro.h"
-#include "lib/Tree.h"
 #define YYSTYPE TreeNode*
 #include "syntax.tab.h"
 #define handle(token) do { \

@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "lib/Tree.h"
+#include "syntax-tree.h"
 #include "symbol.h"
 #define semanticError(errorNo, lineNo, ...) \
 do { \

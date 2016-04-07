@@ -2,7 +2,7 @@
 #define __SYMBOL_H__
 #include <stdbool.h>
 #include "lib/List.h"
-#include "lib/Tree.h"
+#include "syntax-tree.h"
 
 typedef enum { BASIC, ARRAY, STRUCTURE } TypeKind;
 typedef enum { VAR, STRUCT, FUNC} SymbolKind;
@@ -54,5 +54,7 @@ bool symbolAtStackTop(const char*);
 
 bool symbolInsert(Symbol*);
 Symbol* symbolFind(const char*);
+
+void analyseProgram(TreeNode*);
 
 #endif

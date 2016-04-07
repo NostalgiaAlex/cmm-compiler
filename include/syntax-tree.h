@@ -14,6 +14,8 @@ typedef struct TreeNode {
 	ListHead list, children;
 } TreeNode;
 
+extern TreeNode *root;
+
 TreeNode* newNode();
 void treeAddChild(TreeNode*, TreeNode*);
 bool treeIsLeaf(TreeNode*);

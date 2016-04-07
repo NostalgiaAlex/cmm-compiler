@@ -1,15 +1,13 @@
 %{
-#include "common.h"
 #include <string.h>
 #include <stdio.h>
+#include "syntax-tree.h"
+#include "common.h"
 #include "macro.h"
-#include "lib/Tree.h"
 #define YYSTYPE TreeNode*
 int yylex();
 void yyerror(char*);
 TreeNode* createTree(int , ...);
-void analyseProgram(TreeNode*);
-void print(TreeNode*, int);
 extern int yylineno;
 extern int errorStatus;
 #define handle(root, token, arity, ...) \
@@ -37,8 +35,7 @@ do { \
 Program: ExtDefList {
 	   handle($$, Program, 1, $1);
 	   if (errorStatus == 0) {
-		   // print($$, 0);
-		   analyseProgram($$);
+	   		root = $$;
 	   }
 	   }
 	   ;

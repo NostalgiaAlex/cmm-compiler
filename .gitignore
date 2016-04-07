@@ -4,6 +4,7 @@
 !Makefile
 !*.[chyl]
 !.gitignore
+!README
 lex.yy.c
 syntax.tab.c
 syntax.tab.h
