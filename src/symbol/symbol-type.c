@@ -37,7 +37,6 @@ bool typeEqual(Type* a, Type* b) {
 	}
 	return false;
 }
-
 bool argsEqual(ListHead* a, ListHead* b) {
 	ListHead *p = a->next, *q = b->next;
 	while ((p != a) && (q != b)) {
@@ -48,6 +47,20 @@ bool argsEqual(ListHead* a, ListHead* b) {
 		p = p->next; q = q->next;
 	}
 	return (p == a) && (q == b);
+}
+bool funcEqual(Func* a, Func* b) {
+	return (typeEqual(a->retType, b->retType) &&
+			argsEqual(&a->args, &b->args));
+}
+
+void releaseFunc(Func *func) {
+	while (!listIsEmpty(&func->args)) {
+		Arg* arg = listEntry(func->args.next, Arg, list);
+		listDelete(&arg->list);
+		free(arg->name);
+		free(arg);
+	}
+	free(func);
 }
 
 static void typeArrayToStr(Type* type, char* s) {

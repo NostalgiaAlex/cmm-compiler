@@ -21,8 +21,8 @@ typedef struct Field {
 } Field;
 typedef struct Func {
 	Type* retType;
-	int argc;
 	ListHead args;
+	bool defined;
 } Func;
 typedef Field Arg;
 
@@ -30,6 +30,8 @@ extern Type *TYPE_INT, *TYPE_FLOAT;
 void typesInit();
 bool typeEqual(Type*, Type*);
 bool argsEqual(ListHead*, ListHead*);
+bool funcEqual(Func*, Func*);
+void releaseFunc(Func*);
 void typeToStr(Type*, char*);
 void argsToStr(ListHead*, char*);
 Field* fieldFind(ListHead*, const char*);

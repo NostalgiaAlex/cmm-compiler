@@ -48,6 +48,7 @@ ExtDefList: { $$ = NULL; }
 ExtDef: Specifier ExtDecList SEMI { handle($$, ExtDef, 3, $1, $2, $3); }
 	  | Specifier SEMI { handle($$, ExtDef, 2, $1, $2); }
 	  | Specifier FunDec CompSt { handle($$, ExtDef, 3, $1, $2, $3); }
+	  | Specifier FunDec SEMI { handle($$, ExtDef, 3, $1, $2, $3); }
 	  ;
 ExtDecList: VarDec { handle($$, ExtDecList, 1, $1); }
 		  | VarDec COMMA ExtDecList { handle($$, ExtDecList, 3, $1, $2, $3); }

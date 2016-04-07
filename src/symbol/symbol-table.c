@@ -82,3 +82,4 @@ Symbol* symbolFind(const char* name) {
 	}
 	return NULL;
 }
+

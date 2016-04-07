@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <symbol.h>
 #include "lib/Tree.h"
 #include "symbol.h"
 #define semanticError(errorNo, lineNo, ...) \
@@ -28,10 +27,11 @@ const char* str[] = {
 		"Redefined field \"%s\"",
 		"Duplicated name \"%s\"",
 		"Undefined structure \"%s\"",
+		"Undefined function \"%s\"",
+		"Inconsistent declaration of function \"%s\"",
 };
 
 typedef Field Dec;
-
 static Type* retType;
 static Type* analyseSpecifier(TreeNode*);
 static void analyseExtDef(TreeNode*);
@@ -41,7 +41,7 @@ static void analyseDef(TreeNode*, ListHead*);
 static void analyseDecList(TreeNode*, Type*, ListHead*);
 static Dec* analyseVarDec(TreeNode*, Type*);
 static Func* analyseFunDec(TreeNode*, Type*);
-static void analyseVarList(TreeNode*, Func*);
+static void analyseVarList(TreeNode*, ListHead*);
 static Arg* analyseParamDec(TreeNode*);
 static void analyseStmtList(TreeNode*);
 static void analyseStmt(TreeNode*);
@@ -68,12 +68,21 @@ static void analyseExtDef(TreeNode *p) {
 	assert(isSyntax(p, ExtDef));
 	Type *type = analyseSpecifier(treeFirstChild(p));
 	TreeNode *second = treeKthChild(p, 2);
+	TreeNode *last = treeLastChild(p);
 	if (isSyntax(second, ExtDecList)) {
 		analyseExtDecList(second, type);
 	} else if (isSyntax(second, FunDec)) {
 		Func* func = analyseFunDec(second, type);
+		if (!func) return;
 		retType = func->retType;
-		analyseCompSt(treeKthChild(p, 3), func);
+		if (isSyntax(last, CompSt)) {
+			if (func->defined) {
+				semanticError(4, second->lineNo, treeFirstChild(second)->text);
+			} else {
+				analyseCompSt(last, func);
+				func->defined = true;
+			}
+		}
 	}
 }
 
@@ -199,36 +208,59 @@ static Dec* analyseVarDec(TreeNode* p, Type* type) {
 	}
 }
 
+typedef struct FunSymbol {
+	Symbol *symbol;
+	int lineNo;
+	ListHead list;
+} FunSymbol;
+ListHead funSymbols;
 static Func* analyseFunDec(TreeNode* p, Type* type) {
 	assert(p != NULL);
 	assert(isSyntax(p, FunDec));
 	Func *func = (Func*)malloc(sizeof(Func));
 	func->retType = type;
-	func->argc = 0;
+	func->defined = false;
 	listInit(&func->args);
 	TreeNode* id = treeFirstChild(p);
 	assert(isSyntax(id, ID));
-	TreeNode* varList = treeKthChild(p, 3);
-	if (isSyntax(varList, VarList))
-		analyseVarList(varList, func);
-	Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
-	symbol->name = toArray(id->text);
-	symbol->kind = FUNC;
-	symbol->func = func;
-	if (!symbolInsert(symbol))
+	Symbol *symbol = symbolFind(id->text);
+	if ((symbol != NULL)&&(symbol->kind != FUNC)) {
 		semanticError(4, id->lineNo, symbol->name);
-	return symbol->func;
+	} else {
+		TreeNode* varList = treeKthChild(p, 3);
+		if (symbol == NULL) {
+			symbol = (Symbol*)malloc(sizeof(Symbol));
+			symbol->name = toArray(id->text);
+			symbol->kind = FUNC;
+			symbol->func = func;
+			if (symbolInsert(symbol)) {
+				FunSymbol *funSymbol = (FunSymbol*)malloc(sizeof(FunSymbol));
+				funSymbol->symbol = symbol;
+				funSymbol->lineNo = p->lineNo;
+				listAddBefore(&funSymbols, &funSymbol->list);
+			}
+		}
+		if (isSyntax(varList, VarList))
+			analyseVarList(varList, &func->args);
+		if (funcEqual(symbol->func, func)) {
+			if (symbol->func != func) releaseFunc(func);
+			return symbol->func;
+		} else {
+			releaseFunc(func);
+			semanticError(19, p->lineNo, symbol->name);
+		}
+	}
+	return NULL;
 }
 
-static void analyseVarList(TreeNode* p, Func* func) {
+static void analyseVarList(TreeNode* p, ListHead* list) {
 	assert(p != NULL);
 	assert(isSyntax(p, VarList));
 	Arg *arg = analyseParamDec(treeFirstChild(p));
-	listAddBefore(&func->args, &arg->list);
-	func->argc++;
+	listAddBefore(list, &arg->list);
 	TreeNode *rest = treeLastChild(p);
 	if (isSyntax(rest, VarList))
-		analyseVarList(rest, func);
+		analyseVarList(rest, list);
 }
 
 static Arg* analyseParamDec(TreeNode* p) {
@@ -444,5 +476,15 @@ static void analyseArgs(TreeNode* p, ListHead* list) {
 void analyseProgram(TreeNode* p) {
 	assert(p != NULL);
 	assert(isSyntax(p, Program));
-	analyseExtDefList(treeFirstChild(p));
+	listInit(&funSymbols);
+	TreeNode *extDefList = treeFirstChild(p);
+	analyseExtDefList(extDefList);
+	while (!listIsEmpty(&funSymbols)) {
+		FunSymbol *funSymbol = listEntry(funSymbols.next, FunSymbol, list);
+		assert(funSymbol->symbol->kind == FUNC);
+		if (!funSymbol->symbol->func->defined)
+			semanticError(18, funSymbol->lineNo, funSymbol->symbol->name);
+		listDelete(funSymbols.next);
+		free(funSymbol);
+	}
 }
