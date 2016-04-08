@@ -74,7 +74,8 @@ void releaseFunc(Func *func) {
 void releaseType(Type* type) {
 	assert(type != NULL);
 	if (type->kind == ARRAY) {
-		releaseType(type->array.elem);
+		Type *baseType = type->array.elem;
+		if (baseType->kind == ARRAY) releaseType(baseType);
 		free(type);
 	} else if (type->kind == STRUCTURE) {
 		ListHead *p;
