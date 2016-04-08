@@ -58,6 +58,7 @@ bool funcEqual(Func* a, Func* b) {
 }
 
 void releaseArgs(ListHead* args) {
+	assert(args != NULL);
 	while (!listIsEmpty(args)) {
 		Arg* arg = listEntry(args->next, Arg, list);
 		listDelete(&arg->list);
@@ -66,11 +67,29 @@ void releaseArgs(ListHead* args) {
 	}
 }
 void releaseFunc(Func *func) {
+	assert(func != NULL);
 	releaseArgs(&func->args);
 	free(func);
 }
-
+void releaseType(Type* type) {
+	assert(type != NULL);
+	if (type->kind == ARRAY) {
+		releaseType(type->array.elem);
+		free(type);
+	} else if (type->kind == STRUCTURE) {
+		ListHead *p;
+		listForeach(p, &type->structure) {
+			Field *field = listEntry(p, Field, list);
+			releaseType(field->type);
+			free(field->name);
+			free(field);
+		}
+		free(type);
+	}
+}
 static void typeArrayToStr(Type* type, char* s) {
+	assert(type != NULL);
+	assert(s != NULL);
 	if (type->kind == ARRAY) {
 		sprintf(s, "[%d]", type->array.size);
 		s += strlen(s);
@@ -78,10 +97,13 @@ static void typeArrayToStr(Type* type, char* s) {
 	}
 }
 static Type* baseType(Type* type) {
+	assert(type != NULL);
 	if (type->kind != ARRAY) return type;
 	return baseType(type->array.elem);
 }
 void typeToStr(Type* type, char* s) {
+	assert(type != NULL);
+	assert(s != NULL);
 	if (typeEqual(type, TYPE_INT)) {
 		strcpy(s, "int");
 	} else if (typeEqual(type, TYPE_FLOAT)) {
@@ -95,6 +117,8 @@ void typeToStr(Type* type, char* s) {
 	}
 }
 void argsToStr(ListHead* list, char* s) {
+	assert(list != NULL);
+	assert(s != NULL);
 	ListHead *p;
 	listForeach(p, list) {
 		Arg *arg = listEntry(p, Arg, list);
@@ -108,6 +132,8 @@ void argsToStr(ListHead* list, char* s) {
 }
 
 Field* fieldFind(ListHead* structure, const char* fieldName) {
+	assert(structure != NULL);
+	assert(fieldName != NULL);
 	ListHead *p;
 	listForeach(p, structure) {
 		Field* field = listEntry(p, Field, list);

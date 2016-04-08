@@ -33,6 +33,7 @@ bool argsEqual(ListHead*, ListHead*);
 bool funcEqual(Func*, Func*);
 void releaseArgs(ListHead* args);
 void releaseFunc(Func*);
+void releaseType(Type*);
 void typeToStr(Type*, char*);
 void argsToStr(ListHead*, char*);
 Field* fieldFind(ListHead*, const char*);
@@ -47,6 +48,7 @@ typedef struct Symbol {
 	int depth;
 } Symbol;
 
+void releaseSymbol(Symbol*);
 void symbolTableInit();
 void symbolsStackPush();
 void symbolsStackPop();
