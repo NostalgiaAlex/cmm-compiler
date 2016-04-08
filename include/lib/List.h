@@ -1,5 +1,5 @@
-#ifndef __LIB_LIST_H__
-#define __LIB_LIST_H__
+#ifndef COMPILER_LIB_LIST_H
+#define COMPILER_LIB_LIST_H
 
 #include <stdbool.h>
 #include "common.h"

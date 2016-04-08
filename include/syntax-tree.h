@@ -1,10 +1,9 @@
-#ifndef __LIB_NODE_H__
-#define __LIB_NODE_H__
+#ifndef COMPILER_SYNTAX_TREE_H
+#define COMPILER_SYNTAX_TREE_H
 
 #include "lib/List.h"
 
 typedef struct TreeNode {
-	bool isToken;
 	int lineNo, token;
 	union {
 		int intVal;

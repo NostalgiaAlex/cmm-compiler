@@ -1,5 +1,5 @@
-#ifndef __MACRO_H__
-#define __MACRO_H__
+#ifndef COMPILER_MACRO_H
+#define COMPILER_MACRO_H
 
 #define str_temp(x) #x
 #define str(x) str_temp(x) 

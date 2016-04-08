@@ -1,5 +1,5 @@
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#ifndef COMPILER_COMMON_H
+#define COMPILER_COMMON_H
 #include <stdlib.h>
 #include <string.h>
 #include "macro.h"

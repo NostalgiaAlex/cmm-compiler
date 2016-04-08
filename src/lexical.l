@@ -12,7 +12,6 @@
 } while(0)
 TreeNode* newToken(int token) {
 	TreeNode* p = newNode();
-	p->isToken = true;
 	p->lineNo = yylineno;
 	p->token = token;
 	p->text = toArray(yytext);

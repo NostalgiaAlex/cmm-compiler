@@ -48,7 +48,6 @@ TreeNode* createTree(int airty, ...) {
 	va_list ap;
 	va_start(ap, airty);
 	TreeNode *root = newNode();
-	root->isToken = false;
 	size_t i, len = 0;
 	for (i = 0; i < airty; i++) {
 		TreeNode *p = va_arg(ap, TreeNode*);

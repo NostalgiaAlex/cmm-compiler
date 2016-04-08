@@ -1,11 +1,11 @@
-#ifndef __SYMBOL_H__
-#define __SYMBOL_H__
+#ifndef COMPILER_SYMBOL_H
+#define COMPILER_SYMBOL_H
 #include <stdbool.h>
 #include "lib/List.h"
 #include "syntax-tree.h"
 
 typedef enum { BASIC, ARRAY, STRUCTURE } TypeKind;
-typedef enum { VAR, STRUCT, FUNC} SymbolKind;
+typedef enum { VAR, STRUCT, FUNC } SymbolKind;
 typedef struct Type {
 	TypeKind kind;
 	union {
