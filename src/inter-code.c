@@ -4,6 +4,10 @@
 
 ListHead interCodes;
 
+void interCodeInit() {
+	listInit(&interCodes);
+}
+
 InterCode* newInterCode(InterCodeKind kind, Operand* res, Operand* op1, Operand* op2) {
 	InterCode* interCode = (InterCode*)malloc(sizeof(InterCode));
 	interCode->kind = kind;

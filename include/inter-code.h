@@ -20,6 +20,7 @@ typedef struct InterCode {
 } InterCode;
 
 extern ListHead interCodes;
+void interCodeInit();
 InterCode* newInterCode(InterCodeKind, Operand*, Operand*, Operand*);
 
 #endif

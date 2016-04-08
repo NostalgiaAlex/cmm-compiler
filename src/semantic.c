@@ -5,10 +5,13 @@
 #include "symbol.h"
 #define semanticError(errorNo, lineNo, ...) \
 do { \
+	errorStatus = 2; \
 	printf("Error type %d at Line %d: ", (errorNo), (lineNo)); \
 	printf(str[(errorNo)-1], __VA_ARGS__);\
 	puts(".");\
 } while (0)
+
+extern int errorStatus;
 const char* str[] = {
 		"Undefined variable \"%s\"",
 		"Undefined function \"%s\"",

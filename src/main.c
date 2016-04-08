@@ -1,17 +1,23 @@
 #include <stdio.h>
 #include "syntax-tree.h"
+#include "inter-code.h"
 #include "symbol.h"
 
 void yyrestart(FILE*);
 void yyparse();
 void print(TreeNode*, int);
 
-int main(int argc, char* argv[]) {
-    symbolTableInit();
+void init() {
+	symbolTableInit();
 	typesInit();
+	interCodeInit();
+}
+
+int main(int argc, char* argv[]) {
 	if (argc <= 1) return 1;
 	FILE *f = fopen(argv[1], "r");
 	if (!f) return 1;
+	init();
 	yyrestart(f);
 	yyparse();
 	if (root != NULL) {
