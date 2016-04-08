@@ -1,8 +1,10 @@
-*.*
 *
 !*/
 !Makefile
-!*.[chyl]
+!*.c
+!*.h
+!lexical.l
+!syntax.y
 !.gitignore
 !README.md
 lex.yy.c
