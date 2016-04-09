@@ -31,9 +31,9 @@ void typesInit();
 bool typeEqual(Type*, Type*);
 bool argsEqual(ListHead*, ListHead*);
 bool funcEqual(Func*, Func*);
-void releaseArgs(ListHead* args);
-void releaseFunc(Func*);
-void releaseType(Type*);
+void argsRelease(ListHead *args);
+void funcRelease(Func *);
+void typeRelease(Type *);
 void typeToStr(Type*, char*);
 void argsToStr(ListHead*, char*);
 Field* fieldFind(ListHead*, const char*);
@@ -48,7 +48,7 @@ typedef struct Symbol {
 	int depth;
 } Symbol;
 
-void releaseSymbol(Symbol*);
+void symbolRelease(Symbol*);
 void symbolTableInit();
 void symbolsStackPush();
 void symbolsStackPop();

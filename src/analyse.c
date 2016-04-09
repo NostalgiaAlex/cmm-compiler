@@ -7,12 +7,12 @@
 do { \
 	errorStatus = 2; \
 	printf("Error type %d at Line %d: ", (errorNo), (lineNo)); \
-	printf(str[(errorNo)-1], __VA_ARGS__);\
+	printf(errorInfo[(errorNo)-1], __VA_ARGS__);\
 	puts(".");\
 } while (0)
 
 extern int errorStatus;
-const char* str[] = {
+static const char* errorInfo[] = {
 		"Undefined variable \"%s\"",
 		"Undefined function \"%s\"",
 		"Redefined variable \"%s\"",
@@ -59,7 +59,6 @@ typedef struct Val {
 static Val analyseExp(TreeNode*);
 
 static void analyseExtDefList(TreeNode* p) {
-	assert(p != NULL);
 	assert(isSyntax(p, ExtDefList));
 	analyseExtDef(treeFirstChild(p));
 	TreeNode *rest = treeLastChild(p);
@@ -68,7 +67,6 @@ static void analyseExtDefList(TreeNode* p) {
 }
 
 static void analyseExtDef(TreeNode *p) {
-	assert(p != NULL);
 	assert(isSyntax(p, ExtDef));
 	Type *type = analyseSpecifier(treeFirstChild(p));
 	TreeNode *second = treeKthChild(p, 2);
@@ -91,7 +89,6 @@ static void analyseExtDef(TreeNode *p) {
 }
 
 static void analyseExtDecList(TreeNode *p, Type *type) {
-	assert(p != NULL);
 	assert(isSyntax(p, ExtDecList));
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
@@ -107,7 +104,6 @@ static void analyseExtDecList(TreeNode *p, Type *type) {
 }
 
 static Type* analyseSpecifier(TreeNode* p) {
-	assert(p != NULL);
 	assert(isSyntax(p, Specifier));
 	TreeNode* first = treeFirstChild(p);
 	if (isSyntax(first, TYPE)) {
@@ -149,7 +145,6 @@ static Type* analyseSpecifier(TreeNode* p) {
 }
 
 static void analyseDefList(TreeNode* p, ListHead* list) {
-	assert(p != NULL);
 	assert(isSyntax(p, DefList));
 	analyseDef(treeFirstChild(p), list);
 	TreeNode *rest = treeLastChild(p);
@@ -158,7 +153,6 @@ static void analyseDefList(TreeNode* p, ListHead* list) {
 }
 
 static void analyseDef(TreeNode* p, ListHead* list) {
-	assert(p != NULL);
 	assert(isSyntax(p, Def));
 	TreeNode *specifier = treeFirstChild(p);
 	TreeNode *decList = treeKthChild(p, 2);
@@ -167,7 +161,6 @@ static void analyseDef(TreeNode* p, ListHead* list) {
 }
 
 static void analyseDecList(TreeNode* p, Type* type, ListHead* list) {
-	assert(p != NULL);
 	assert(isSyntax(p, DecList));
 	TreeNode *dec = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
@@ -177,7 +170,6 @@ static void analyseDecList(TreeNode* p, Type* type, ListHead* list) {
 }
 
 static void analyseDec(TreeNode* p, Type* type, ListHead* list) {
-	assert(p != NULL);
 	assert(isSyntax(p, Dec));
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *last = treeLastChild(p);
@@ -207,7 +199,6 @@ static void analyseDec(TreeNode* p, Type* type, ListHead* list) {
 }
 
 static Dec* analyseVarDec(TreeNode* p, Type* type) {
-	assert(p != NULL);
 	assert(isSyntax(p, VarDec));
 	TreeNode* first = treeFirstChild(p);
 	if (isSyntax(first, ID)) {
@@ -234,7 +225,6 @@ typedef struct FunSymbol {
 } FunSymbol;
 ListHead funSymbols;
 static Func* analyseFunDec(TreeNode* p, Type* type) {
-	assert(p != NULL);
 	assert(isSyntax(p, FunDec));
 	assert(type != NULL);
 	Func *func = (Func*)malloc(sizeof(Func));
@@ -265,12 +255,12 @@ static Func* analyseFunDec(TreeNode* p, Type* type) {
 		if (funcEqual(symbol->func, func)) {
 			if (symbol->func != func) {
 				func->defined = symbol->func->defined;
-				releaseFunc(symbol->func);
+				funcRelease(symbol->func);
 				symbol->func = func;
 			}
 			return symbol->func;
 		} else {
-			releaseFunc(func);
+			funcRelease(func);
 			semanticError(19, p->lineNo, symbol->name);
 		}
 	}
@@ -278,7 +268,6 @@ static Func* analyseFunDec(TreeNode* p, Type* type) {
 }
 
 static void analyseVarList(TreeNode* p, ListHead* list) {
-	assert(p != NULL);
 	assert(isSyntax(p, VarList));
 	Arg *arg = analyseParamDec(treeFirstChild(p));
 	listAddBefore(list, &arg->list);
@@ -288,14 +277,12 @@ static void analyseVarList(TreeNode* p, ListHead* list) {
 }
 
 static Arg* analyseParamDec(TreeNode* p) {
-	assert(p != NULL);
 	assert(isSyntax(p, ParamDec));
 	Type *type = analyseSpecifier(treeFirstChild(p));
 	return analyseVarDec(treeLastChild(p), type);
 }
 
 static void analyseCompSt(TreeNode* p, Func* func) {
-	assert(p != NULL);
 	assert(isSyntax(p, CompSt));
 	symbolsStackPush();
 	ListHead *q;
@@ -320,7 +307,6 @@ static void analyseCompSt(TreeNode* p, Func* func) {
 }
 
 static void analyseStmtList(TreeNode* p) {
-	assert(p != NULL);
 	assert(isSyntax(p, StmtList));
 	TreeNode *rest = treeLastChild(p);
 	analyseStmt(treeFirstChild(p));
@@ -330,7 +316,6 @@ static void analyseStmtList(TreeNode* p) {
 
 static Val requireType(TreeNode *, Type *, int);
 static void analyseStmt(TreeNode* p) {
-	assert(p != NULL);
 	assert(isSyntax(p, Stmt));
 	TreeNode *first = treeFirstChild(p);
 	if (isSyntax(first, RETURN)) {
@@ -365,6 +350,7 @@ static Val makeVal(Type* type) {
 	return val;
 }
 static Val requireBasic(TreeNode* p, int errorNo) {
+	assert(isSyntax(p, Exp));
 	Val val = analyseExp(p);
 	if ((val.type != NULL)&&(val.type->kind != BASIC)) {
 		semanticError(errorNo, p->lineNo, p->text);
@@ -372,6 +358,7 @@ static Val requireBasic(TreeNode* p, int errorNo) {
 	return val;
 }
 static Val requireType(TreeNode *p, Type *type, int errorNo) {
+	assert(isSyntax(p, Exp));
 	Val val = analyseExp(p);
 	if ((val.type != NULL)&&(!typeEqual(val.type, type))) {
 		semanticError(errorNo, p->lineNo, p->text);
@@ -380,7 +367,6 @@ static Val requireType(TreeNode *p, Type *type, int errorNo) {
 }
 #define check(val) do { if (val.type == NULL) return makeVal(NULL); } while (0)
 static Val analyseExp(TreeNode* p) {
-	assert(p != NULL);
 	assert(isSyntax(p, Exp));
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *second = treeKthChild(p, 2);
@@ -406,7 +392,7 @@ static Val analyseExp(TreeNode* p) {
 					argsToStr(&list, argsStr);
 					semanticError(9, id->lineNo, symbol->name, paramsStr, argsStr);
 				}
-				releaseArgs(&list);
+				argsRelease(&list);
 				return makeVal(symbol->func->retType);
 			}
 		} else { // ID
@@ -489,7 +475,6 @@ static Val analyseExp(TreeNode* p) {
 
 static void analyseArgs(TreeNode* p, ListHead* list) {
 	assert(list != NULL);
-	assert(p != NULL);
 	assert(isSyntax(p, Args));
 	TreeNode *exp = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
@@ -502,7 +487,6 @@ static void analyseArgs(TreeNode* p, ListHead* list) {
 }
 
 void analyseProgram(TreeNode* p) {
-	assert(p != NULL);
 	assert(isSyntax(p, Program));
 	listInit(&funSymbols);
 	TreeNode *extDefList = treeFirstChild(p);

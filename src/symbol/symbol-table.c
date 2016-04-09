@@ -35,12 +35,12 @@ static unsigned hashPJW(const char* name) {
 	return val;
 }
 
-void releaseSymbol(Symbol* symbol) {
+void symbolRelease(Symbol* symbol) {
 	assert(symbol!= NULL);
 	SymbolKind kind = symbol->kind;
 	Type *type = symbol->type;
 	if (((kind == VAR)&&(type->kind == ARRAY))||(kind == STRUCT)) {
-		releaseType(type);
+		typeRelease(type);
 	}
 	free(symbol->name);
 	free(symbol);
@@ -55,7 +55,7 @@ void symbolsStackPop() {
 		SymbolNode *p = listEntry(top->next, SymbolNode, stack);
 		listDelete(&p->list);
 		listDelete(&p->stack);
-		releaseSymbol(p->symbol);
+		symbolRelease(p->symbol);
 		free(p);
 	}
 	stackTop--;

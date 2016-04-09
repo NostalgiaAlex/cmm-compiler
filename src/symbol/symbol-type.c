@@ -57,7 +57,7 @@ bool funcEqual(Func* a, Func* b) {
 			argsEqual(&a->args, &b->args));
 }
 
-void releaseArgs(ListHead* args) {
+void argsRelease(ListHead *args) {
 	assert(args != NULL);
 	while (!listIsEmpty(args)) {
 		Arg* arg = listEntry(args->next, Arg, list);
@@ -66,28 +66,29 @@ void releaseArgs(ListHead* args) {
 		free(arg);
 	}
 }
-void releaseFunc(Func *func) {
+void funcRelease(Func *func) {
 	assert(func != NULL);
-	releaseArgs(&func->args);
+	argsRelease(&func->args);
 	free(func);
 }
-void releaseType(Type* type) {
+void typeRelease(Type *type) {
 	assert(type != NULL);
 	if (type->kind == ARRAY) {
 		Type *baseType = type->array.elem;
-		if (baseType->kind == ARRAY) releaseType(baseType);
+		if (baseType->kind == ARRAY) typeRelease(baseType);
 		free(type);
 	} else if (type->kind == STRUCTURE) {
 		ListHead *p;
 		listForeach(p, &type->structure) {
 			Field *field = listEntry(p, Field, list);
-			releaseType(field->type);
+			typeRelease(field->type);
 			free(field->name);
 			free(field);
 		}
 		free(type);
 	}
 }
+
 static void typeArrayToStr(Type* type, char* s) {
 	assert(type != NULL);
 	assert(s != NULL);
@@ -102,6 +103,7 @@ static Type* baseType(Type* type) {
 	if (type->kind != ARRAY) return type;
 	return baseType(type->array.elem);
 }
+
 void typeToStr(Type* type, char* s) {
 	assert(type != NULL);
 	assert(s != NULL);

@@ -6,11 +6,13 @@
 void yyrestart(FILE*);
 void yyparse();
 void print(TreeNode*, int);
+void test();
 
 void init() {
 	symbolTableInit();
 	typesInit();
 	interCodeInit();
+	test();
 }
 
 int main(int argc, char* argv[]) {
