@@ -3,7 +3,7 @@
 
 #include "lib/List.h"
 
-typedef enum { VARIABLE, CONSTANT, ADDRESS, LABEL, FUNCTION } OperandKind;
+typedef enum { VARIABLE, CONSTANT, DEREF, ADDRESS, LABEL, FUNCTION } OperandKind;
 typedef struct Operand {
 	OperandKind kind;
 	union {
@@ -14,12 +14,19 @@ typedef struct Operand {
 	char* text;
 } Operand;
 Operand* newOperand(OperandKind);
+Operand* newVarOperand();
+Operand* newLabelOperand();
+Operand* newFunctionOperand(char*);
+Operand* constOperand(int);
+Operand* varOperand(int);
+Operand* addressOperand(int);
+Operand* deRefOperand(int);
 char* operandToStr(Operand*);
 void operandRelease(Operand*);
 
 typedef enum {
 	DEF_LABEL, DEF_FUNCTION,
-	ASSIGN, ADD, SUB, MUL, DIV, GET_ADDRESS,
+	ASSIGN, ADD, SUB, MUL, DIV,
 	GOTO, GOTO_WITH_COND,
 	RETURN, DEC, ARG, CALL, PARAM,
 	READ, WRITE,
@@ -36,6 +43,6 @@ typedef struct InterCode {
 
 void interCodeInit();
 InterCode* newInterCode(InterCodeKind);
-void interCodeInsert(InterCode*);
+void interCodeToStr(InterCode*, char*);
 
 #endif
