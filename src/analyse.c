@@ -7,12 +7,11 @@
 do { \
 	errorStatus = 2; \
 	printf("Error type %d at Line %d: ", (errorNo), (lineNo)); \
-	printf(errorInfo[(errorNo)-1], __VA_ARGS__);\
+	printf(semanticErrorInfo[(errorNo)-1], __VA_ARGS__);\
 	puts(".");\
 } while (0)
-
 extern int errorStatus;
-static const char* errorInfo[] = {
+const char* semanticErrorInfo[] = {
 		"Undefined variable \"%s\"",
 		"Undefined function \"%s\"",
 		"Redefined variable \"%s\"",
@@ -44,7 +43,7 @@ static void analyseDef(TreeNode*, ListHead*);
 static void analyseDecList(TreeNode*, Type*, ListHead*);
 static void analyseDec(TreeNode*, Type*, ListHead*);
 static Dec* analyseVarDec(TreeNode*, Type*);
-static Func* analyseFunDec(TreeNode*, Type*);
+static Func* analyseFunDec(TreeNode*, Type*, bool);
 static void analyseVarList(TreeNode*, ListHead*);
 static Arg* analyseParamDec(TreeNode*);
 static void analyseStmtList(TreeNode*);
@@ -74,16 +73,13 @@ static void analyseExtDef(TreeNode *p) {
 	if (isSyntax(second, ExtDecList)) {
 		analyseExtDecList(second, type);
 	} else if (isSyntax(second, FunDec)) {
-		Func* func = analyseFunDec(second, type);
+		bool isDef = isSyntax(last, CompSt);
+		Func* func = analyseFunDec(second, type, isDef);
 		if (!func) return;
 		retType = func->retType;
-		if (isSyntax(last, CompSt)) {
-			if (func->defined) {
-				semanticError(4, second->lineNo, treeFirstChild(second)->text);
-			} else {
-				analyseCompSt(last, func);
-				func->defined = true;
-			}
+		if (isDef) {
+			analyseCompSt(last, func);
+			func->defined = true;
 		}
 	}
 }
@@ -224,7 +220,7 @@ typedef struct FunSymbol {
 	ListHead list;
 } FunSymbol;
 ListHead funSymbols;
-static Func* analyseFunDec(TreeNode* p, Type* type) {
+static Func* analyseFunDec(TreeNode* p, Type* type, bool isDef) {
 	assert(isSyntax(p, FunDec));
 	assert(type != NULL);
 	Func *func = (Func*)malloc(sizeof(Func));
@@ -234,7 +230,7 @@ static Func* analyseFunDec(TreeNode* p, Type* type) {
 	TreeNode* id = treeFirstChild(p);
 	assert(isSyntax(id, ID));
 	Symbol *symbol = symbolFind(id->text);
-	if ((symbol != NULL)&&(symbol->kind != FUNC)) {
+	if ((symbol != NULL)&&((symbol->kind != FUNC)||(isDef&&symbol->func->defined))) {
 		semanticError(4, id->lineNo, symbol->name);
 	} else {
 		TreeNode* varList = treeKthChild(p, 3);
@@ -260,10 +256,10 @@ static Func* analyseFunDec(TreeNode* p, Type* type) {
 			}
 			return symbol->func;
 		} else {
-			funcRelease(func);
 			semanticError(19, p->lineNo, symbol->name);
 		}
 	}
+	funcRelease(func);
 	return NULL;
 }
 

@@ -35,7 +35,7 @@ static unsigned hashPJW(const char* name) {
 	return val;
 }
 
-void symbolRelease(Symbol* symbol) {
+void symbolRelease(Symbol *symbol) {
 	assert(symbol!= NULL);
 	SymbolKind kind = symbol->kind;
 	Type *type = symbol->type;
