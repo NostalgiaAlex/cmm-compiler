@@ -6,6 +6,6 @@
 
 char* toArray(const char*);
 #define isSyntax(node, token) \
-	(strcmp((node)->name, str(token)) == 0)
+	((node != NULL)&&(strcmp((node)->name, str(token)) == 0))
 
 #endif
