@@ -145,3 +145,22 @@ Field* fieldFind(ListHead* structure, const char* fieldName) {
 	}
 	return NULL;
 }
+
+int typeSize(Type *type) {
+	assert(type != NULL);
+	int size = 0;
+	ListHead *p;
+	switch (type->kind) {
+		case BASIC:
+			return 4;
+		case ARRAY:
+			return typeSize(type->array.elem)*type->array.size;
+		case STRUCTURE:
+			listForeach(p, &type->structure) {
+				Field *field = listEntry(p, Field, list);
+				size += typeSize(field->type);
+			}
+			return size;
+	}
+	return 0;
+}
