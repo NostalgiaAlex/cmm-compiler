@@ -41,4 +41,3 @@ bool listIsEmpty(ListHead *list) {
 	assert(list != NULL);
 	return list == list->next;
 }
-

@@ -48,6 +48,9 @@ typedef struct Symbol {
 	};
 	int depth;
 } Symbol;
+Symbol* newVarSymbol(const char*, Type*);
+Symbol* newStructSymbol(const char*, Type*);
+Symbol* newFuncSymbol(const char*, Func*);
 
 void symbolRelease(Symbol*);
 void symbolTableInit();

@@ -80,5 +80,5 @@ void test() {
 	InterCode *ir4 = newInterCode(DEF_LABEL);
 	ir4->res = newLabelOperand();
 	interCodeInsert(ir4);
-	interCodePrint(stdout);
+//	interCodePrint(stdout);
 }

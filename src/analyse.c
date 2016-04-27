@@ -7,11 +7,11 @@
 do { \
 	errorStatus = 2; \
 	printf("Error type %d at Line %d: ", (errorNo), (lineNo)); \
-	printf(semanticErrorInfo[(errorNo)-1], __VA_ARGS__);\
+	printf(SEMANTIC_ERROR[(errorNo)-1], __VA_ARGS__);\
 	puts(".");\
 } while (0)
 extern int errorStatus;
-const char* semanticErrorInfo[] = {
+const char* SEMANTIC_ERROR[] = {
 		"Undefined variable \"%s\"",
 		"Undefined function \"%s\"",
 		"Redefined variable \"%s\"",
@@ -89,10 +89,7 @@ static void analyseExtDecList(TreeNode *p, Type *type) {
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
 	Dec *varDec = analyseVarDec(first, type);
-	Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
-	symbol->name = toArray(varDec->name);
-	symbol->kind = VAR;
-	symbol->type = type;
+	Symbol *symbol = newVarSymbol(varDec->name, type);
 	if (!symbolInsert(symbol))
 		semanticError(3, first->lineNo, symbol->name);
 	if (isSyntax(rest, ExtDecList))
@@ -127,10 +124,7 @@ static Type* analyseSpecifier(TreeNode* p) {
 			if (defListIndex == 4) {
 				TreeNode* id = treeFirstChild(tag);
 				assert(isSyntax(id, ID));
-				Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
-				symbol->name = toArray(id->text);
-				symbol->kind = STRUCT;
-				symbol->type = type;
+				Symbol *symbol = newStructSymbol(id->text, type);
 				if (!symbolInsert(symbol))
 					semanticError(16, id->lineNo, id->text);
 			}
@@ -179,10 +173,7 @@ static void analyseDec(TreeNode* p, Type* type, ListHead* list) {
 		if (isSyntax(last, Exp))
 			semanticError(15, p->lineNo, varDec->name);
 	} else {
-		Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
-		symbol->name = varDec->name;
-		symbol->kind = VAR;
-		symbol->type = varDec->type;
+		Symbol *symbol = newVarSymbol(varDec->name, varDec->type);
 		if (!symbolInsert(symbol)) {
 			semanticError(3, p->lineNo, symbol->name);
 		} else if (isSyntax(last, Exp)) {
@@ -190,6 +181,7 @@ static void analyseDec(TreeNode* p, Type* type, ListHead* list) {
 			if ((val.type != NULL)&&(!typeEqual(val.type, symbol->type)))
 				semanticError(5, treeKthChild(p, 2)->lineNo, "");
 		}
+		free(varDec->name);
 		free(varDec);
 	}
 }
@@ -235,10 +227,7 @@ static Func* analyseFunDec(TreeNode* p, Type* type, bool isDef) {
 	} else {
 		TreeNode* varList = treeKthChild(p, 3);
 		if (symbol == NULL) {
-			symbol = (Symbol*)malloc(sizeof(Symbol));
-			symbol->name = toArray(id->text);
-			symbol->kind = FUNC;
-			symbol->func = func;
+			symbol = newFuncSymbol(id->text, func);
 			if (symbolInsert(symbol)) {
 				FunSymbol *funSymbol = (FunSymbol*)malloc(sizeof(FunSymbol));
 				funSymbol->symbol = symbol;
@@ -285,10 +274,7 @@ static void analyseCompSt(TreeNode* p, Func* func) {
 	if (func != NULL) {
 		listForeach(q, &func->args) {
 			Arg *arg = listEntry(q, Arg, list);
-			Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
-			symbol->name = toArray(arg->name);
-			symbol->kind = VAR;
-			symbol->type = arg->type;
+			Symbol *symbol = newVarSymbol(arg->name, arg->type);
 			symbolInsert(symbol);
 		}
 	}
