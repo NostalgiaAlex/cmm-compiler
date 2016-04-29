@@ -37,6 +37,14 @@ TreeNode* treeKthChild(TreeNode* root, int k) {
 	return listEntry(p, TreeNode, list);
 }
 
+TreeNode* treeLastKthChild(TreeNode* root, int k) {
+	assert(root != NULL);
+	assert(!listIsEmpty(&root->children));
+	ListHead *p = &root->children;
+	for (; k > 0; k--) p = p->prev;
+	return listEntry(p, TreeNode, list);
+}
+
 TreeNode* newNode() {
 	TreeNode* p = (TreeNode*)malloc(sizeof(TreeNode));
 	listInit(&p->list);

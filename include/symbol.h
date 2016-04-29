@@ -26,7 +26,8 @@ typedef struct Func {
 } Func;
 typedef Field Arg;
 
-extern Type *TYPE_INT, *TYPE_FLOAT;
+extern Type* const TYPE_INT;
+extern Type* const TYPE_FLOAT;
 void typesInit();
 bool typeEqual(Type*, Type*);
 bool argsEqual(ListHead*, ListHead*);

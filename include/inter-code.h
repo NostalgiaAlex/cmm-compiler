@@ -40,9 +40,15 @@ typedef struct InterCode {
 	};
 	ListHead list;
 } InterCode;
+typedef ListHead InterCodes;
 
 void interCodeInit();
 InterCode* newInterCode(InterCodeKind);
 void interCodeToStr(InterCode*, char*);
+
+void interCodeStackPush();
+void interCodeStackPop();
+void interCodeStackInsert(InterCodes*);
+InterCodes* interCodeStackGet();
 
 #endif

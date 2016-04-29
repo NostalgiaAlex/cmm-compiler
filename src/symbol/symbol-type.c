@@ -4,12 +4,14 @@
 #include <symbol.h>
 #include <stdio.h>
 
-Type *TYPE_INT, *TYPE_FLOAT;
+static Type _TYPE_INT, _TYPE_FLOAT;
+Type* const TYPE_INT = &_TYPE_INT;
+Type* const TYPE_FLOAT = &_TYPE_FLOAT;
 void typesInit() {
-	TYPE_INT = (Type*)malloc(sizeof(Type));
-	TYPE_INT->basic = 0;
-	TYPE_FLOAT = (Type*)malloc(sizeof(Type));
-	TYPE_FLOAT->basic = 1;
+	_TYPE_INT.kind = BASIC;
+	_TYPE_INT.basic = 0;
+	_TYPE_FLOAT.kind = BASIC;
+	_TYPE_INT.basic = 1;
 }
 
 bool typeEqual(Type* a, Type* b) {
