@@ -217,10 +217,7 @@ ListHead funSymbols;
 static Func* analyseFunDec(TreeNode* p, Type* type, bool isDef) {
 	assert(isSyntax(p, FunDec));
 	assert(type != NULL);
-	Func *func = (Func*)malloc(sizeof(Func));
-	func->retType = type;
-	func->defined = false;
-	listInit(&func->args);
+	Func *func = newFunc(type);
 	TreeNode* id = treeFirstChild(p);
 	assert(isSyntax(id, ID));
 	Symbol *symbol = symbolFind(id->text);

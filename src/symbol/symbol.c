@@ -26,3 +26,10 @@ Symbol* newStructSymbol(const char* name, Type* type) {
 	symbol->type = type;
 	return symbol;
 }
+
+Func* newFunc(Type* retType) {
+	Func *func = (Func*)malloc(sizeof(Func));
+	listInit(&func->args);
+	func->retType = retType;
+	return func;
+}

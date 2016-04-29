@@ -12,7 +12,7 @@ void init() {
 	symbolTableInit();
 	typesInit();
 	interCodeInit();
-	test();
+//	test();
 }
 
 int main(int argc, char* argv[]) {
