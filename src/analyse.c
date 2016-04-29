@@ -48,7 +48,7 @@ static void analyseVarList(TreeNode*, ListHead*);
 static Arg* analyseParamDec(TreeNode*);
 static void analyseStmtList(TreeNode*);
 static void analyseStmt(TreeNode*);
-static void analyseArgs(TreeNode*, ListHead*);
+static bool analyseArgs(TreeNode*, ListHead*);
 static void analyseCompSt(TreeNode*, Func*);
 
 typedef struct Val {
@@ -116,12 +116,14 @@ static Type* analyseSpecifier(TreeNode* p) {
 			}
 			return symbol->type;
 		} else {
-			int defListIndex = (isSyntax(tag, OptTag))? 4: 3;
 			Type *type = (Type*)malloc(sizeof(Type));
 			type->kind = STRUCTURE;
 			listInit(&type->structure);
-			analyseDefList(treeKthChild(first, defListIndex), &type->structure);
-			if (defListIndex == 4) {
+			TreeNode *defList = treeLastKthChild(first, 2);
+			if (isSyntax(defList, DefList)) {
+				analyseDefList(defList, &type->structure);
+			}
+			if (isSyntax(tag, OptTag)) {
 				TreeNode* id = treeFirstChild(tag);
 				assert(isSyntax(id, ID));
 				Symbol *symbol = newStructSymbol(id->text, type);
@@ -275,16 +277,16 @@ static void analyseCompSt(TreeNode* p, Func* func) {
 		listForeach(q, &func->args) {
 			Arg *arg = listEntry(q, Arg, list);
 			Symbol *symbol = newVarSymbol(arg->name, arg->type);
-			symbolInsert(symbol);
+			if (!symbolInsert(symbol))
+				semanticError(3, p->lineNo, symbol->name);
 		}
 	}
-	TreeNode *next = treeKthChild(p, 2);
-	if (isSyntax(next, DefList)) {
-		analyseDefList(next, NULL);
-		next = treeKthChild(p, 3);
-	}
-	if (isSyntax(next, StmtList))
-		analyseStmtList(next);
+	TreeNode *defList = treeKthChild(p, 2);
+	TreeNode *stmtList = treeLastKthChild(p, 2);
+	if (isSyntax(defList, DefList))
+		analyseDefList(defList, NULL);
+	if (isSyntax(stmtList, StmtList))
+		analyseStmtList(stmtList);
 	symbolsStackPop();
 }
 
@@ -366,9 +368,10 @@ static Val analyseExp(TreeNode* p) {
 				ListHead list;
 				listInit(&list);
 				TreeNode *args = treeKthChild(p, 3);
+				bool ok = true;
 				if (isSyntax(args, Args))
-					analyseArgs(args, &list);
-				if (!argsEqual(&list, &symbol->func->args)) {
+					ok = analyseArgs(args, &list);
+				if (ok&&(!argsEqual(&list, &symbol->func->args))) {
 					char paramsStr[32], argsStr[32];
 					argsToStr(&symbol->func->args, paramsStr);
 					argsToStr(&list, argsStr);
@@ -455,7 +458,7 @@ static Val analyseExp(TreeNode* p) {
 	return makeVal(NULL);
 }
 
-static void analyseArgs(TreeNode* p, ListHead* list) {
+static bool analyseArgs(TreeNode* p, ListHead* list) {
 	assert(list != NULL);
 	assert(isSyntax(p, Args));
 	TreeNode *exp = treeFirstChild(p);
@@ -464,8 +467,10 @@ static void analyseArgs(TreeNode* p, ListHead* list) {
 	arg->type = analyseExp(exp).type;
 	arg->name = NULL;
 	listAddBefore(list, &arg->list);
+	if (arg->type == NULL) return false;
 	if (isSyntax(rest, Args))
-		analyseArgs(rest, list);
+		return analyseArgs(rest, list);
+	return true;
 }
 
 void analyseProgram(TreeNode* p) {

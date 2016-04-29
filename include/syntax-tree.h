@@ -21,5 +21,6 @@ bool treeIsLeaf(TreeNode*);
 TreeNode* treeFirstChild(TreeNode*);
 TreeNode* treeLastChild(TreeNode*);
 TreeNode* treeKthChild(TreeNode*, int);
+TreeNode* treeLastKthChild(TreeNode*, int);
 
 #endif
