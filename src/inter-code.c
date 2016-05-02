@@ -4,14 +4,6 @@
 #include "lib/List.h"
 #include "inter-code.h"
 
-#define SIZE 1005
-static ListHead stack[SIZE];
-static int top;
-typedef struct ListNode {
-	ListHead list;
-	InterCodes *head;
-} ListNode;
-
 static const char *INTER_CODE[] = {
 		"LABEL %s :",
 		"FUNCTION %s :",
@@ -30,11 +22,6 @@ static const char *INTER_CODE[] = {
 		"READ %s",
 		"WRITE %s",
 };
-
-void interCodeInit() {
-	listInit(stack);
-	top = 0;
-}
 
 InterCode* newInterCode(InterCodeKind kind) {
 	InterCode* p = (InterCode*)malloc(sizeof(InterCode));
@@ -55,33 +42,11 @@ InterCodes* interCodesBind(InterCodes *first, InterCodes *second) {
 	assert(second != NULL);
 	assert(first != second);
 	while (!listIsEmpty(second)) {
-		InterCodes *p = second->next;
+		ListHead *p = second->next;
 		listDelete(p);
 		listAddBefore(first, p);
 	}
 	return first;
-}
-
-void interCodeStackPush() {
-	top++;
-	listInit(stack+top);
-}
-
-void interCodeStackPop() {
-	top--;
-}
-
-void interCodeStackInsert(InterCodes* head) {
-	ListNode *listNode = (ListNode*)malloc(sizeof(ListNode));
-	listAddBefore(stack+top, &listNode->list);
-	listNode->head = head;
-}
-
-InterCodes* interCodeStackGet() {
-	ListHead *p = stack[top].next;
-	ListNode *listNode = listEntry(p, ListNode, list);
-	listDelete(p);
-	return listNode->head;
 }
 
 #define op2s operandToStr

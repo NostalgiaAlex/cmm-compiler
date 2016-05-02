@@ -1,9 +1,10 @@
 #ifndef COMPILER_INTER_CODE_H
 #define COMPILER_INTER_CODE_H
 
+#include <stdio.h>
 #include "lib/List.h"
 
-typedef enum { VARIABLE, CONSTANT, DEREF, ADDRESS, LABEL, FUNCTION } OperandKind;
+typedef enum { VARIABLE, TEMP, CONSTANT, DEREF, ADDRESS, LABEL, FUNCTION } OperandKind;
 typedef struct Operand {
 	OperandKind kind;
 	union {
@@ -15,6 +16,7 @@ typedef struct Operand {
 } Operand;
 Operand* newOperand(OperandKind);
 Operand* newVarOperand();
+Operand* newTempOperand();
 Operand* newLabelOperand();
 Operand* newFunctionOperand(char*);
 Operand* constOperand(int);
@@ -42,13 +44,10 @@ typedef struct InterCode {
 } InterCode;
 typedef ListHead InterCodes;
 
-void interCodeInit();
 InterCode* newInterCode(InterCodeKind);
 void interCodeToStr(InterCode*, char*);
+void interCodesPrint(FILE*, InterCodes*);
 
-void interCodeStackPush();
-void interCodeStackPop();
-void interCodeStackInsert(InterCodes*);
-InterCodes* interCodeStackGet();
-
+InterCodes* interCodeInsert(InterCodes*, InterCode*);
+InterCodes* interCodesBind(InterCodes*, InterCodes*);
 #endif

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "syntax-tree.h"
-#include "inter-code.h"
+#include "translate.h"
 #include "symbol.h"
 
 void yyrestart(FILE*);
@@ -11,7 +11,7 @@ void test();
 void init() {
 	symbolTableInit();
 	typesInit();
-	interCodeInit();
+	interCodesInit();
 //	test();
 }
 
@@ -25,6 +25,8 @@ int main(int argc, char* argv[]) {
 	if (root != NULL) {
 //		print(root, 0);
 		analyseProgram(root);
+		InterCodes *head = interCodesGet();
+		interCodesPrint(stdout, head);
 	}
 	return 0;
 }

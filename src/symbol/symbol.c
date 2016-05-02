@@ -6,6 +6,7 @@ static Symbol* newSymbol(SymbolKind kind, const char * name) {
 	Symbol *symbol = (Symbol*)malloc(sizeof(Symbol));
 	symbol->kind = kind;
 	symbol->name = toArray(name);
+	symbol->id = -1;
 	return symbol;
 }
 

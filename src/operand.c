@@ -15,6 +15,14 @@ Operand* newVarOperand() {
 	p->id = ++cnt;
 	return p;
 }
+
+Operand* newTempOperand() {
+	static int cnt = 0;
+	Operand *p = newOperand(TEMP);
+	p->id = ++cnt;
+	return p;
+}
+
 Operand* newLabelOperand() {
 	static int cnt = 0;
 	Operand *p = newOperand(LABEL);
@@ -59,7 +67,8 @@ char* operandToStr(Operand* p) {
 	if (p == NULL) return NULL;
 	if (p->text != NULL) return p->text;
 	switch (p->kind) {
-		case VARIABLE: getStr(p->text, "t%d", p->id);
+		case TEMP: getStr(p->text, "t%d", p->id);
+		case VARIABLE: getStr(p->text, "v%d", p->id);
 		case CONSTANT: getStr(p->text, "#%d", p->value);
 		case ADDRESS: getStr(p->text, "&t%d", p->id);
 		case DEREF: getStr(p->text, "*t%d", p->id);

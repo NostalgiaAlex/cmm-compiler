@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "syntax-tree.h"
+#include "inter-code.h"
 #include "symbol.h"
+#include "translate.h"
 #define semanticError(errorNo, lineNo, ...) \
 do { \
 	errorStatus = 2; \
@@ -43,7 +45,7 @@ static void analyseDef(TreeNode*, ListHead*);
 static void analyseDecList(TreeNode*, Type*, ListHead*);
 static void analyseDec(TreeNode*, Type*, ListHead*);
 static Dec* analyseVarDec(TreeNode*, Type*);
-static Func* analyseFunDec(TreeNode*, Type*, bool);
+static Symbol* analyseFunDec(TreeNode*, Type*, bool);
 static void analyseVarList(TreeNode*, ListHead*);
 static Arg* analyseParamDec(TreeNode*);
 static void analyseStmtList(TreeNode*);
@@ -74,12 +76,15 @@ static void analyseExtDef(TreeNode *p) {
 		analyseExtDecList(second, type);
 	} else if (isSyntax(second, FunDec)) {
 		bool isDef = isSyntax(last, CompSt);
-		Func* func = analyseFunDec(second, type, isDef);
-		if (!func) return;
+		Symbol *symbol = analyseFunDec(second, type, isDef);
+		if (symbol == NULL) return;
+		Func *func = symbol->func;
 		retType = func->retType;
 		if (isDef) {
 			analyseCompSt(last, func);
 			func->defined = true;
+			InterCodes *irs = interCodeStackGet();
+			defineFunc(symbol->name, irs);
 		}
 	}
 }
@@ -214,7 +219,7 @@ typedef struct FunSymbol {
 	ListHead list;
 } FunSymbol;
 ListHead funSymbols;
-static Func* analyseFunDec(TreeNode* p, Type* type, bool isDef) {
+static Symbol* analyseFunDec(TreeNode* p, Type* type, bool isDef) {
 	assert(isSyntax(p, FunDec));
 	assert(type != NULL);
 	Func *func = newFunc(type);
@@ -242,7 +247,7 @@ static Func* analyseFunDec(TreeNode* p, Type* type, bool isDef) {
 				funcRelease(symbol->func);
 				symbol->func = func;
 			}
-			return symbol->func;
+			return symbol;
 		} else {
 			semanticError(19, p->lineNo, symbol->name);
 		}
@@ -269,6 +274,7 @@ static Arg* analyseParamDec(TreeNode* p) {
 static void analyseCompSt(TreeNode* p, Func* func) {
 	assert(isSyntax(p, CompSt));
 	symbolsStackPush();
+	interCodeStackPush();
 	ListHead *q;
 	if (func != NULL) {
 		listForeach(q, &func->args) {
@@ -284,6 +290,10 @@ static void analyseCompSt(TreeNode* p, Func* func) {
 		analyseDefList(defList, NULL);
 	if (isSyntax(stmtList, StmtList))
 		analyseStmtList(stmtList);
+
+	InterCodes *irs = translateCompSt(p, func);
+	interCodeStackPop();
+	interCodeStackInsert(irs);
 	symbolsStackPop();
 }
 
