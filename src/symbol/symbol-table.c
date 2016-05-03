@@ -84,7 +84,7 @@ bool symbolInsert(Symbol* symbol) {
 	listInit(&p->list);
 	listInit(&p->stack);
 	unsigned hashVal = hashPJW(symbol->name);
-	listAddBefore(symbolTable+hashVal, &p->list);
+	listAddAfter(symbolTable+hashVal, &p->list);
 	listAddBefore(stack+stackTop, &p->stack);
 	return true;
 }

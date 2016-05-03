@@ -64,6 +64,7 @@ $(BISON_OBJ): $(BISON_C_FILE)
 
 run: $(TARGET)
 	./bin/parser test.cmm test.ir
+	@cat test.ir
 
 test: $(TARGET) $(TESTFILES)
 	./test.sh $(TESTFILES)
