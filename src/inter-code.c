@@ -4,6 +4,9 @@
 #include "lib/List.h"
 #include "inter-code.h"
 
+#define SIZE 1005
+static InterCode irsPool[SIZE];
+
 static const char *INTER_CODE[] = {
 		"LABEL %s :",
 		"FUNCTION %s :",
@@ -24,7 +27,8 @@ static const char *INTER_CODE[] = {
 };
 
 InterCode* newInterCode3(InterCodeKind kind, Operand* res, Operand* op1, Operand* op2) {
-	InterCode* p = (InterCode*)malloc(sizeof(InterCode));
+	static int cnt = 0;
+	InterCode* p = &irsPool[cnt++];
 	p->kind = kind;
 	p->res = res;
 	p->op1 = op1;
@@ -94,28 +98,4 @@ void interCodesPrint(FILE *file, InterCodes *head) {
 		interCodeToStr(interCode, buf);
 		fprintf(file, "%s\n", buf);
 	}
-}
-
-void test() {
-	InterCodes first, second;
-	listInit(&first);
-	listInit(&second);
-	InterCode *ir1 = newInterCode(DEF_FUNCTION);
-	ir1->res = newFunctionOperand("func");
-	interCodeInsert(&first, ir1);
-	InterCode *ir2 = newInterCode(ADD);
-	ir2->res = newVarOperand();
-	Operand *op = newVarOperand();
-	ir2->op1 = deRefOperand(op->id);
-	ir2->op2 = constOperand(4);
-	interCodeInsert(&first, ir2);
-	InterCode *ir3 = newInterCode(ASSIGN);
-	ir3->res = addressOperand(ir2->res->id);
-	ir3->op1 = constOperand(100);
-	interCodeInsert(&second, ir3);
-	InterCode *ir4 = newInterCode(DEF_LABEL);
-	ir4->res = newLabelOperand();
-	interCodeInsert(&second, ir4);
-	interCodesBind(&first, &second);
-	interCodesPrint(stdout, &first);
 }

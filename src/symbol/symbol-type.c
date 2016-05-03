@@ -64,7 +64,7 @@ void argsRelease(ListHead *args) {
 	while (!listIsEmpty(args)) {
 		Arg* arg = listEntry(args->next, Arg, list);
 		listDelete(&arg->list);
-		if (arg->name != NULL) free(arg->name);
+		free(arg->name);
 		free(arg);
 	}
 }

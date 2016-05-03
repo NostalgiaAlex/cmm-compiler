@@ -3,8 +3,12 @@
 #include <stdio.h>
 #include "inter-code.h"
 
+#define SIZE 1005
+static Operand operandsPool[SIZE];
+
 Operand* newOperand(OperandKind kind) {
-	Operand *p = (Operand*)malloc(sizeof(Operand));
+	static int cnt = 0;
+	Operand *p = &operandsPool[cnt++];
 	p->kind = kind;
 	p->name = p->text = NULL;
 	return p;

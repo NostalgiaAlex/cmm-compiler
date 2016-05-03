@@ -62,6 +62,9 @@ $(BISON_OBJ): $(BISON_C_FILE)
 	@sed -e 's|syntax.tab.o|$(BISON_OBJ)|' < $(BISON_DEP).tmp > $(BISON_DEP)
 	@rm -f $(BISON_DEP).tmp
 
+run: $(TARGET)
+	./bin/parser test.cmm test.ir
+
 test: $(TARGET) $(TESTFILES)
 	./test.sh $(TESTFILES)
 
