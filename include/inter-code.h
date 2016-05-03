@@ -14,6 +14,9 @@ typedef struct Operand {
 	};
 	char* text;
 } Operand;
+extern Operand* const CONST_ZERO;
+extern Operand* const CONST_ONE;
+void operandInit();
 Operand* newOperand(OperandKind);
 int newVarOperandId();
 int newTempOperandId();

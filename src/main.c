@@ -9,6 +9,7 @@ void print(TreeNode*, int);
 void init() {
 	symbolTableInit();
 	typesInit();
+	operandInit();
 	interCodesInit();
 }
 

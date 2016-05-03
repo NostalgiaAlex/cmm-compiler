@@ -6,6 +6,17 @@
 #define SIZE 1005
 static Operand operandsPool[SIZE];
 
+static Operand zero, one;
+Operand* const CONST_ZERO = &zero;
+Operand* const CONST_ONE = &one;
+
+void operandInit() {
+	zero.kind = CONSTANT;
+	zero.value = 0;
+	one.kind = CONSTANT;
+	one.value = 1;
+}
+
 Operand* newOperand(OperandKind kind) {
 	static int cnt = 0;
 	Operand *p = &operandsPool[cnt++];
