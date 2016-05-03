@@ -13,7 +13,7 @@ InterCodes* interCodeStackGet();
 
 InterCodes* interCodesGet();
 
-void translateExp(TreeNode*);
+InterCodes* translateExp(TreeNode*, Operand*);
 InterCodes* translateCompSt(TreeNode*, Func*);
 void defineFunc(char*, InterCodes*);
 

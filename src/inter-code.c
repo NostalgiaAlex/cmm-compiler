@@ -23,11 +23,31 @@ static const char *INTER_CODE[] = {
 		"WRITE %s",
 };
 
-InterCode* newInterCode(InterCodeKind kind) {
+InterCode* newInterCode3(InterCodeKind kind, Operand* res, Operand* op1, Operand* op2) {
 	InterCode* p = (InterCode*)malloc(sizeof(InterCode));
 	p->kind = kind;
-	p->res = p->op1 = p->op2 = NULL;
+	p->res = res;
+	p->op1 = op1;
+	p->op2 = op2;
 	return p;
+}
+
+InterCode* newInterCode1(InterCodeKind kind, Operand* res) {
+	return newInterCode3(kind, res, NULL, NULL);
+}
+
+InterCode* newInterCode2(InterCodeKind kind, Operand* res, Operand* op) {
+	return newInterCode3(kind, res, op, NULL);
+}
+
+InterCode* newInterCode(InterCodeKind kind) {
+	return newInterCode3(kind, NULL, NULL, NULL);
+}
+
+InterCodes* newInterCodes() {
+	InterCodes* irs = (InterCodes*)malloc(sizeof(InterCodes));
+	listInit(irs);
+	return irs;
 }
 
 InterCodes* interCodeInsert(InterCodes *head, InterCode *p) {
@@ -46,6 +66,7 @@ InterCodes* interCodesBind(InterCodes *first, InterCodes *second) {
 		listDelete(p);
 		listAddBefore(first, p);
 	}
+	free(second);
 	return first;
 }
 
@@ -66,12 +87,12 @@ void interCodeToStr(InterCode* p, char* s) {
 void interCodesPrint(FILE *file, InterCodes *head) {
 	assert(file != NULL);
 	assert(head != NULL);
-	char s[120];
-	InterCodes *p;
+	static char buf[120];
+	ListHead *p;
 	listForeach(p, head) {
 		InterCode *interCode = listEntry(p, InterCode, list);
-		interCodeToStr(interCode, s);
-		fprintf(file, "%s\n", s);
+		interCodeToStr(interCode, buf);
+		fprintf(file, "%s\n", buf);
 	}
 }
 

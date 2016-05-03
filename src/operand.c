@@ -9,31 +9,35 @@ Operand* newOperand(OperandKind kind) {
 	p->name = p->text = NULL;
 	return p;
 }
+
+int newVarOperandId() {
+	static int cnt = 0;
+	return ++cnt;
+}
+int newTempOperandId() {
+	static int cnt = 0;
+	return ++cnt;
+}
+int newLabelOperandId() {
+	static int cnt = 0;
+	return ++cnt;
+}
+
 Operand* newVarOperand() {
-	static int cnt = 0;
-	Operand *p = newOperand(VARIABLE);
-	p->id = ++cnt;
-	return p;
+	return varOperand(newVarOperandId());
 }
-
 Operand* newTempOperand() {
-	static int cnt = 0;
-	Operand *p = newOperand(TEMP);
-	p->id = ++cnt;
-	return p;
+	return tempOperand(newTempOperandId());
 }
-
 Operand* newLabelOperand() {
-	static int cnt = 0;
-	Operand *p = newOperand(LABEL);
-	p->id = ++cnt;
-	return p;
+	return labelOperand(newLabelOperandId());
 }
 Operand* newFunctionOperand(char* s) {
 	Operand *p = newOperand(FUNCTION);
 	p->name = s;
 	return p;
 }
+
 Operand* constOperand(int val) {
 	Operand *p = newOperand(CONSTANT);
 	p->value = val;
@@ -41,6 +45,11 @@ Operand* constOperand(int val) {
 }
 Operand* varOperand(int id) {
 	Operand *p = newOperand(VARIABLE);
+	p->id = id;
+	return p;
+}
+Operand* tempOperand(int id) {
+	Operand *p = newOperand(TEMP);
 	p->id = id;
 	return p;
 }
@@ -54,6 +63,12 @@ Operand* deRefOperand(int id) {
 	p->id = id;
 	return p;
 }
+Operand* labelOperand(int id) {
+	Operand *p = newOperand(LABEL);
+	p->id = id;
+	return p;
+}
+
 
 #define getStr(str, format, ...) do { \
 	static char buf[30]; \
