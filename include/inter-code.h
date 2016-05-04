@@ -32,7 +32,6 @@ Operand* addressOperand(int);
 Operand* deRefOperand(int);
 Operand* labelOperand(int);
 char* operandToStr(Operand*);
-void operandRelease(Operand*);
 
 typedef enum {
 	DEF_LABEL, DEF_FUNCTION,
@@ -55,7 +54,6 @@ typedef ListHead InterCodes;
 InterCode* newInterCode3(InterCodeKind, Operand*, Operand*, Operand*);
 InterCode* newInterCode2(InterCodeKind, Operand*, Operand*);
 InterCode* newInterCode1(InterCodeKind, Operand*);
-InterCode* newInterCode(InterCodeKind);
 void interCodeToStr(InterCode*, char*);
 void interCodesPrint(FILE*, InterCodes*);
 

@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "lib/List.h"
 #include "syntax-tree.h"
+#include "inter-code.h"
 
 typedef enum { BASIC, ARRAY, STRUCTURE } TypeKind;
 typedef enum { VAR, STRUCT, FUNC } SymbolKind;
@@ -54,6 +55,7 @@ Symbol* newVarSymbol(const char*, Type*);
 Symbol* newStructSymbol(const char*, Type*);
 Symbol* newFuncSymbol(const char*, Func*);
 Func* newFunc(Type*);
+Operand* symbolGetOperand(Symbol*);
 
 void symbolRelease(Symbol*);
 void symbolTableInit();

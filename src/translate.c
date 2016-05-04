@@ -62,6 +62,9 @@ static InterCodes* translateCond(TreeNode*, Operand*, Operand*);
 static InterCodes* translateArgs(TreeNode*, ListHead*);
 static InterCodes* translateStmtList(TreeNode*);
 static InterCodes* translateStmt(TreeNode*);
+static InterCodes* translateDefList(TreeNode*);
+static InterCodes* translateDecList(TreeNode*);
+static InterCodes* translateDec(TreeNode*);
 
 InterCodes* translateCompSt(TreeNode *p, Func* func) {
 	assert(isSyntax(p, CompSt));
@@ -76,10 +79,10 @@ InterCodes* translateCompSt(TreeNode *p, Func* func) {
 		}
 	}
 
-//	TreeNode *defList = treeKthChild(p, 2);
+	TreeNode *defList = treeKthChild(p, 2);
 	TreeNode *stmtList = treeLastKthChild(p, 2);
-//	if (isSyntax(defList, DefList))
-//		analyseDefList(defList, NULL);
+	if (isSyntax(defList, DefList))
+		interCodesBind(irs, translateDefList(defList));
 	if (isSyntax(stmtList, StmtList))
 		interCodesBind(irs, translateStmtList(stmtList));
 	return irs;
@@ -138,9 +141,7 @@ InterCodes* translateExp(TreeNode *p, Operand *res) {
 		} else { // ID
 			checkRes();
 			Symbol *symbol = symbolFind(first->text);
-			if (symbol->id < 0)
-				symbol->id = newVarOperandId();
-			*res = *varOperand(symbol->id);
+			*res = *symbolGetOperand(symbol);
 		}
 	} else if (isSyntax(first, INT)) {
 		checkRes();
@@ -317,4 +318,51 @@ static InterCodes* translateStmt(TreeNode *p) {
 		interCodeInsert(irs, newInterCode1(GOTO, label1));
 		return interCodeInsert(irs, newInterCode1(DEF_LABEL, label3));
 	}
+}
+
+static InterCodes* translateDefList(TreeNode *p) {
+	assert(isSyntax(p, DefList));
+	TreeNode *first = treeFirstChild(p);
+	TreeNode *rest = treeLastChild(p);
+	TreeNode *decList = treeKthChild(first, 2);
+	InterCodes *irs = translateDecList(decList);
+	if (isSyntax(rest, DefList))
+		interCodesBind(irs, translateDefList(rest));
+	return irs;
+}
+
+static InterCodes* translateDecList(TreeNode *p) {
+	assert(isSyntax(p, DecList));
+	TreeNode *first = treeFirstChild(p);
+	TreeNode *rest = treeLastChild(p);
+	InterCodes *irs = translateDec(first);
+	if (isSyntax(rest, DecList))
+		interCodesBind(irs, translateDecList(rest));
+	return irs;
+}
+
+char *varDecToStr(TreeNode *p) {
+	assert(isSyntax(p, VarDec));
+	TreeNode *first = treeFirstChild(p);
+	if (isSyntax(first, ID)) return first->text;
+	return varDecToStr(first);
+}
+static InterCodes* translateDec(TreeNode *p) {
+	assert(isSyntax(p, Dec));
+	TreeNode *first = treeFirstChild(p);
+	TreeNode *last = treeLastChild(p);
+	Symbol *symbol = symbolFind(varDecToStr(first));
+	InterCodes *irs = newInterCodes();
+	Operand *var = symbolGetOperand(symbol);
+	if (symbol->type->kind != BASIC) {
+		InterCode *ir = newInterCode1(DEC, var);
+		ir->size = typeSize(symbol->type);
+		interCodeInsert(irs, ir);
+	}
+	if (isSyntax(last, Exp)) {
+		Operand *op = newTempOperand();
+		interCodesBind(irs, translateExp(last, op));
+		interCodeInsert(irs, newInterCode2(ASSIGN, var, op));
+	}
+	return irs;
 }

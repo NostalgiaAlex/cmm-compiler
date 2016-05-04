@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "inter-code.h"
 #include "common.h"
 #include "symbol.h"
 
@@ -33,4 +34,10 @@ Func* newFunc(Type* retType) {
 	listInit(&func->args);
 	func->retType = retType;
 	return func;
+}
+
+Operand* symbolGetOperand(Symbol *symbol) {
+	if (symbol->id < 0)
+		symbol->id = newVarOperandId();
+	return varOperand(symbol->id);
 }

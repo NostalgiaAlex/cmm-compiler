@@ -4,7 +4,7 @@
 #include "lib/List.h"
 #include "inter-code.h"
 
-#define SIZE 1005
+#define SIZE 10005
 static InterCode irsPool[SIZE];
 
 static const char *INTER_CODE[] = {
@@ -36,16 +36,12 @@ InterCode* newInterCode3(InterCodeKind kind, Operand* res, Operand* op1, Operand
 	return p;
 }
 
-InterCode* newInterCode1(InterCodeKind kind, Operand* res) {
-	return newInterCode3(kind, res, NULL, NULL);
-}
-
 InterCode* newInterCode2(InterCodeKind kind, Operand* res, Operand* op) {
 	return newInterCode3(kind, res, op, NULL);
 }
 
-InterCode* newInterCode(InterCodeKind kind) {
-	return newInterCode3(kind, NULL, NULL, NULL);
+InterCode* newInterCode1(InterCodeKind kind, Operand* res) {
+	return newInterCode3(kind, res, NULL, NULL);
 }
 
 InterCodes* newInterCodes() {

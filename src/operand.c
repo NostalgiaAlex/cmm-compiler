@@ -1,9 +1,8 @@
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "inter-code.h"
 
-#define SIZE 1005
+#define SIZE 10005
 static Operand operandsPool[SIZE];
 
 static Operand zero, one;
@@ -84,7 +83,6 @@ Operand* labelOperand(int id) {
 	return p;
 }
 
-
 #define getStr(str, format, ...) do { \
 	static char buf[30]; \
 	sprintf(buf, format, __VA_ARGS__); \
@@ -106,9 +104,4 @@ char* operandToStr(Operand* p) {
 		case FUNCTION: getStr(p->text, "%s", p->name);
 	}
 	return NULL;
-}
-
-void operandRelease(Operand* p) {
-	free(p->text);
-	free(p);
 }
