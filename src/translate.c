@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <symbol.h>
 #include "syntax-tree.h"
 #include "translate.h"
 
@@ -96,6 +97,7 @@ typedef struct OperandNode {
 #define checkRes() do { if (!res) return irs; } while (0)
 InterCodes* translateExp(TreeNode *p, Operand *res) {
 	assert(isSyntax(p, Exp));
+	static Type *type = NULL;
 	InterCodes *irs = newInterCodes();
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *second = treeKthChild(p, 2);
@@ -141,11 +143,38 @@ InterCodes* translateExp(TreeNode *p, Operand *res) {
 		} else { // ID
 			checkRes();
 			Symbol *symbol = symbolFind(first->text);
-			*res = *symbolGetOperand(symbol);
+			type = symbol->type;
+			Operand *op = symbolGetOperand(symbol);
+			if ((res->id < 0)&&(type->kind != BASIC)) {
+				res->id = newTempOperandId();
+				InterCode *ir = newInterCode2(GET_REF, res, op);
+				interCodeInsert(irs, ir);
+			} else {
+				*res = *op;
+			}
 		}
 	} else if (isSyntax(first, INT)) {
 		checkRes();
 		*res = *constOperand(first->intVal);
+	} else if (isSyntax(second, LB)) {
+		TreeNode *indexNode = treeLastKthChild(p, 2);
+		Operand *index = newTempOperand();
+		interCodesBind(irs, translateExp(indexNode, index));
+		Operand *base = tempOperand(-1);
+		interCodesBind(irs, translateExp(first, base));
+		assert(type->kind == ARRAY);
+		type = type->array.elem;
+		Operand *tmp = newTempOperand();
+		Operand *size = constOperand(typeSize(type));
+		interCodeInsert(irs, newInterCode3(MUL, tmp, index, size));
+		if (res->id < 0) {
+			res->id = newTempOperandId();
+			interCodeInsert(irs, newInterCode3(ADD, res, base, tmp));
+		} else {
+			Operand *tmp2 = newTempOperand();
+			interCodeInsert(irs, newInterCode3(ADD, tmp2, base, tmp));
+			interCodeInsert(irs, newInterCode2(GET_ADDR, res, tmp2));
+		}
 	} else if (isSyntax(first, LP)) {
 		return translateExp(second, res);
 	} else if (isSyntax(first, NOT)||isSyntax(second, RELOP)||
@@ -166,6 +195,23 @@ InterCodes* translateExp(TreeNode *p, Operand *res) {
 		checkRes();
 		InterCode *ir = newInterCode3(SUB, res, CONST_ZERO, op);
 		interCodeInsert(irs, ir);
+	} else if (isSyntax(second, ASSIGNOP)) {
+		Operand *op1 = tempOperand(-1);
+		Operand *op2 = newTempOperand();
+		InterCodes* irs1 = translateExp(first, op1);
+		InterCodes* irs2 = translateExp(last, op2);
+		interCodesBind(irs, irs1);
+		interCodesBind(irs, irs2);
+		InterCode *ir = (op1->kind == VARIABLE)?
+						newInterCode2(ASSIGN, op1, op2):
+						newInterCode2(SET_ADDR, op1, op2);
+		interCodeInsert(irs, ir);
+		checkRes();
+		if (res->id < 0) {
+			*res = *op1;
+		} else {
+			interCodeInsert(irs, newInterCode2(GET_ADDR, res, op1));
+		}
 	} else {
 		Operand *op1 = newTempOperand();
 		Operand *op2 = newTempOperand();
@@ -174,24 +220,18 @@ InterCodes* translateExp(TreeNode *p, Operand *res) {
 		interCodesBind(irs, irs1);
 		interCodesBind(irs, irs2);
 		InterCodeKind kind = ADD;
-		if (isSyntax(second, ASSIGNOP)) {
-			InterCode *ir = newInterCode2(ASSIGN, op1, op2);
-			interCodeInsert(irs, ir);
-			if (res) *res = *op1;
-		} else {
-			checkRes();
-			if (isSyntax(second, PLUS)) {
-				kind = ADD;
-			} else if (isSyntax(second, MINUS)) {
-				kind = SUB;
-			} else if (isSyntax(second, STAR)) {
-				kind = MUL;
-			} else if (isSyntax(second, DIV)) {
-				kind = DIV;
-			}
-			InterCode *ir = newInterCode3(kind, res, op1, op2);
-			interCodeInsert(irs, ir);
+		checkRes();
+		if (isSyntax(second, PLUS)) {
+			kind = ADD;
+		} else if (isSyntax(second, MINUS)) {
+			kind = SUB;
+		} else if (isSyntax(second, STAR)) {
+			kind = MUL;
+		} else if (isSyntax(second, DIV)) {
+			kind = DIV;
 		}
+		InterCode *ir = newInterCode3(kind, res, op1, op2);
+		interCodeInsert(irs, ir);
 	}
 	return irs;
 }

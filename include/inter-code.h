@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "lib/List.h"
 
-typedef enum { VARIABLE, TEMP, CONSTANT, DEREF, ADDRESS, LABEL, FUNCTION } OperandKind;
+typedef enum { VARIABLE, TEMP, CONSTANT, LABEL, FUNCTION } OperandKind;
 typedef struct Operand {
 	OperandKind kind;
 	union {
@@ -28,14 +28,13 @@ Operand* newFunctionOperand(char*);
 Operand* constOperand(int);
 Operand* varOperand(int);
 Operand* tempOperand(int);
-Operand* addressOperand(int);
-Operand* deRefOperand(int);
 Operand* labelOperand(int);
 char* operandToStr(Operand*);
 
 typedef enum {
 	DEF_LABEL, DEF_FUNCTION,
 	ASSIGN, ADD, SUB, MUL, DIV,
+	GET_REF, GET_ADDR, SET_ADDR,
 	GOTO, GOTO_WITH_COND,
 	RETURN, DEC, ARG, CALL, PARAM,
 	READ, WRITE,

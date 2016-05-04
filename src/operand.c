@@ -67,16 +67,6 @@ Operand* tempOperand(int id) {
 	p->id = id;
 	return p;
 }
-Operand* addressOperand(int id) {
-	Operand *p = newOperand(ADDRESS);
-	p->id = id;
-	return p;
-}
-Operand* deRefOperand(int id) {
-	Operand *p = newOperand(DEREF);
-	p->id = id;
-	return p;
-}
 Operand* labelOperand(int id) {
 	Operand *p = newOperand(LABEL);
 	p->id = id;
@@ -98,8 +88,6 @@ char* operandToStr(Operand* p) {
 		case TEMP: getStr(p->text, "t%d", p->id);
 		case VARIABLE: getStr(p->text, "v%d", p->id);
 		case CONSTANT: getStr(p->text, "#%d", p->value);
-		case ADDRESS: getStr(p->text, "&t%d", p->id);
-		case DEREF: getStr(p->text, "*t%d", p->id);
 		case LABEL: getStr(p->text, "label%d", p->id);
 		case FUNCTION: getStr(p->text, "%s", p->name);
 	}
