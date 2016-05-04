@@ -17,6 +17,7 @@ typedef struct ListHead {
 void listAddBefore(ListHead*, ListHead*);
 void listAddAfter(ListHead*, ListHead*);
 void listDelete(ListHead*);
+void listMerge(ListHead*, ListHead*);
 void listInit(ListHead*);
 bool listIsEmpty(ListHead*);
 

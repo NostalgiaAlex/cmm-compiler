@@ -59,8 +59,8 @@ void defineFunc(char *name, InterCodes *irs) {
 }
 
 static InterCodes* translateCond(TreeNode*, Operand*, Operand*);
-static InterCodes* translateArgs(TreeNode*, InterCodes*, ListHead*);
-static InterCodes* translateStmtList(TreeNode*, InterCodes*);
+static InterCodes* translateArgs(TreeNode*, ListHead*);
+static InterCodes* translateStmtList(TreeNode*);
 static InterCodes* translateStmt(TreeNode*);
 
 InterCodes* translateCompSt(TreeNode *p, Func* func) {
@@ -81,7 +81,7 @@ InterCodes* translateCompSt(TreeNode *p, Func* func) {
 //	if (isSyntax(defList, DefList))
 //		analyseDefList(defList, NULL);
 	if (isSyntax(stmtList, StmtList))
-		translateStmtList(stmtList, irs);
+		interCodesBind(irs, translateStmtList(stmtList));
 	return irs;
 }
 
@@ -103,7 +103,7 @@ InterCodes* translateExp(TreeNode *p, Operand *res) {
 			ListHead args;
 			listInit(&args);
 			if (isSyntax(argsNode, Args))
-				translateArgs(argsNode, irs, &args);
+				interCodesBind(irs, translateArgs(argsNode, &args));
 			if (strcmp(first->text, "read") == 0) {
 				if (!res) res = newTempOperand();
 				InterCode *ir = newInterCode1(READ, res);
@@ -158,7 +158,6 @@ InterCodes* translateExp(TreeNode *p, Operand *res) {
 		interCodeInsert(irs, newInterCode1(DEF_LABEL, label1));
 		interCodeInsert(irs, newInterCode2(ASSIGN, res, CONST_ONE));
 		interCodeInsert(irs, newInterCode1(DEF_LABEL, label2));
-
 	} else if (isSyntax(first, MINUS)) {
 		Operand *op = newTempOperand();
 		InterCodes *expIRs = translateExp(second, op);
@@ -237,30 +236,27 @@ static InterCodes* translateCond(TreeNode *p, Operand *labelTrue, Operand *label
 	}
 }
 
-static InterCodes* translateArgs(TreeNode *p, InterCodes *irs, ListHead *args) {
+static InterCodes* translateArgs(TreeNode *p, ListHead *args) {
 	assert(isSyntax(p, Args));
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
 	Operand *op = newTempOperand();
-	InterCodes *expIRs = translateExp(first, op);
+	InterCodes *irs = translateExp(first, op);
 	OperandNode *operandNode = (OperandNode*)malloc(sizeof(OperandNode));
 	operandNode->op = op;
 	listAddAfter(args, &operandNode->list);
-	interCodesBind(irs, expIRs);
 	if (isSyntax(rest, Args))
-		translateArgs(rest, irs, args);
+		interCodesBind(irs, translateArgs(rest, args));
 	return irs;
 }
 
-static InterCodes* translateStmtList(TreeNode *p, InterCodes *irs) {
+static InterCodes* translateStmtList(TreeNode *p) {
 	assert(isSyntax(p, StmtList));
-	assert(irs != NULL);
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
-	InterCodes *firstIRs = translateStmt(first);
-	interCodesBind(irs, firstIRs);
+	InterCodes *irs = translateStmt(first);
 	if (isSyntax(rest, StmtList))
-		translateStmtList(rest, irs);
+		interCodesBind(irs, translateStmtList(rest));
 	return irs;
 }
 

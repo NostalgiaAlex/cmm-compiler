@@ -32,6 +32,20 @@ void listDelete(ListHead *data) {
 	if (next != NULL) next->prev = prev;
 }
 
+void listMerge(ListHead *dest, ListHead *src) {
+	assert(dest != NULL);
+	assert(src != NULL);
+	assert(dest != src);
+	if (listIsEmpty(src)) return;
+	ListHead *srcTail = src->prev;
+	ListHead *srcHead = src->next;
+	ListHead *destTail = dest->prev;
+	destTail->next = srcHead;
+	srcHead->prev = destTail;
+	dest->prev = srcTail;
+	srcTail->next = dest;
+}
+
 void listInit(ListHead *list) {
 	assert(list != NULL);
 	list->prev = list->next = list;

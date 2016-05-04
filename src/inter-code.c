@@ -65,11 +65,7 @@ InterCodes* interCodesBind(InterCodes *first, InterCodes *second) {
 	assert(first != NULL);
 	assert(second != NULL);
 	assert(first != second);
-	while (!listIsEmpty(second)) {
-		ListHead *p = second->next;
-		listDelete(p);
-		listAddBefore(first, p);
-	}
+	listMerge(first, second);
 	free(second);
 	return first;
 }
