@@ -20,9 +20,11 @@ DEP_DIR       = $(TARGET_DIR)/dep
 TARGET        = $(TARGET_DIR)/parser
 CFILES        = $(shell find $(SRC_DIR) -name "*.c")
 DFILES        = $(shell find . -name "*.d")
-TESTFILES     = $(shell find testcase -name "*.c")
-OUTPUTFILES   = $(shell find testcase -name "*.output")
+TESTFILES     = $(shell find testcase -name "3.*.c")
+OUTPUTFILES   = $(shell find testcase -name "*.ir")
 OBJS          = $(CFILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+INPUT         = test.cmm
+OUTPUT        = test.ir
 
 $(TARGET): $(OBJS) $(FLEX_OBJ) $(BISON_OBJ)
 	$(CC) $(OBJS) $(FLEX_OBJ) $(BISON_OBJ) $(CFLAGS) -lfl -ly -o $(TARGET)
@@ -63,8 +65,11 @@ $(BISON_OBJ): $(BISON_C_FILE)
 	@rm -f $(BISON_DEP).tmp
 
 run: $(TARGET)
-	./bin/parser test.cmm test.ir
-	@cat test.ir
+	./bin/parser $(INPUT) $(OUTPUT)
+	@cat $(OUTPUT)
+
+play:
+	python irsim/irsim.pyc
 
 test: $(TARGET) $(TESTFILES)
 	./test.sh $(TESTFILES)

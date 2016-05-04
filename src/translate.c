@@ -46,16 +46,16 @@ InterCodes* interCodeStackGet() {
 }
 
 
-void defineFunc(char *name, InterCodes *irs) {
-	assert(name != NULL);
-	InterCode* ir = newInterCode(DEF_FUNCTION);
-	ir->res = newFunctionOperand(name);
-	interCodeInsert(&head, ir);
-	interCodesBind(&head, irs);
-}
-
 InterCodes* interCodesGet() {
 	return &head;
+}
+
+void defineFunc(char *name, InterCodes *irs) {
+	assert(name != NULL);
+	Operand *op = newFunctionOperand(name);
+	InterCode* ir = newInterCode1(DEF_FUNCTION, op);
+	interCodeInsert(&head, ir);
+	interCodesBind(&head, irs);
 }
 
 static InterCodes* translateCond(TreeNode*, Operand*, Operand*);
@@ -70,8 +70,7 @@ InterCodes* translateCompSt(TreeNode *p, Func* func) {
 		ListHead *q;
 		listForeach(q, &func->args) {
 			char *name = listEntry(q, Arg, list)->name;
-			InterCode *ir = newInterCode(PARAM);
-			ir->res = newVarOperand();
+			InterCode *ir = newInterCode1(PARAM, newVarOperand());
 			interCodeInsert(irs, ir);
 			symbolFind(name)->id = ir->res->id;
 		}
@@ -281,7 +280,45 @@ static InterCodes* translateStmt(TreeNode *p) {
 		InterCode *ir = newInterCode1(RETURN, op);
 		interCodeInsert(irs, ir);
 		return irs;
+	} else if (isSyntax(first, IF)) {
+		TreeNode *exp = treeKthChild(p, 3);
+		bool withElse = isSyntax(treeLastKthChild(p, 2), ELSE);
+		TreeNode *stmt1, *stmt2;
+		if (withElse) {
+			stmt1 = treeLastKthChild(p, 3);
+			stmt2 = treeLastChild(p);
+		} else {
+			stmt1 = treeLastChild(p);
+			stmt2 = NULL;
+		}
+		Operand *label1 = newLabelOperand();
+		Operand *label2 = newLabelOperand();
+		Operand *label3 = NULL;
+		InterCodes *irs = translateCond(exp, label1, label2);
+		interCodeInsert(irs, newInterCode1(DEF_LABEL, label1));
+		interCodesBind(irs, translateStmt(stmt1));
+		if (stmt2) {
+			label3 = newLabelOperand();
+			interCodeInsert(irs, newInterCode1(GOTO, label3));
+		}
+		interCodeInsert(irs, newInterCode1(DEF_LABEL, label2));
+		if (stmt2) {
+			interCodesBind(irs, translateStmt(stmt2));
+			interCodeInsert(irs, newInterCode1(DEF_LABEL, label3));
+		}
+		return irs;
 	} else {
-		return NULL;
+		TreeNode *exp = treeKthChild(p, 3);
+		TreeNode *stmt = treeLastChild(p);
+		Operand *label1 = newLabelOperand();
+		Operand *label2 = newLabelOperand();
+		Operand *label3 = newLabelOperand();
+		InterCodes *irs = newInterCodes();
+		interCodeInsert(irs, newInterCode1(DEF_LABEL, label1));
+		interCodesBind(irs, translateCond(exp, label2, label3));
+		interCodeInsert(irs, newInterCode1(DEF_LABEL, label2));
+		interCodesBind(irs, translateStmt(stmt));
+		interCodeInsert(irs, newInterCode1(GOTO, label1));
+		return interCodeInsert(irs, newInterCode1(DEF_LABEL, label3));
 	}
 }
