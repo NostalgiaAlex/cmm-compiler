@@ -148,6 +148,20 @@ Field* fieldFind(ListHead* structure, const char* fieldName) {
 	return NULL;
 }
 
+int fieldOffset(ListHead *structure, const char* fieldName) {
+	assert(structure != NULL);
+	assert(fieldName != NULL);
+	int offset = 0;
+	ListHead *p;
+	listForeach(p, structure) {
+		Field* field = listEntry(p, Field, list);
+		if (strcmp(field->name, fieldName) == 0)
+			return offset;
+		offset += typeSize(field->type);
+	}
+	return -1;
+}
+
 int typeSize(Type *type) {
 	assert(type != NULL);
 	int size = 0;

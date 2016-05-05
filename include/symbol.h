@@ -39,6 +39,7 @@ void typeRelease(Type *);
 void typeToStr(Type*, char*);
 void argsToStr(ListHead*, char*);
 Field* fieldFind(ListHead*, const char*);
+int fieldOffset(ListHead*, const char*);
 int typeSize(Type *);
 
 typedef struct Symbol {

@@ -164,16 +164,33 @@ InterCodes* translateExp(TreeNode *p, Operand *res) {
 		interCodesBind(irs, translateExp(first, base));
 		assert(type->kind == ARRAY);
 		type = type->array.elem;
-		Operand *tmp = newTempOperand();
+		Operand *offset = newTempOperand();
 		Operand *size = constOperand(typeSize(type));
-		interCodeInsert(irs, newInterCode3(MUL, tmp, index, size));
+		interCodeInsert(irs, newInterCode3(MUL, offset, index, size));
 		if (res->id < 0) {
 			res->id = newTempOperandId();
-			interCodeInsert(irs, newInterCode3(ADD, res, base, tmp));
+			interCodeInsert(irs, newInterCode3(ADD, res, base, offset));
 		} else {
-			Operand *tmp2 = newTempOperand();
-			interCodeInsert(irs, newInterCode3(ADD, tmp2, base, tmp));
-			interCodeInsert(irs, newInterCode2(GET_ADDR, res, tmp2));
+			Operand *tmp = newTempOperand();
+			interCodeInsert(irs, newInterCode3(ADD, tmp, base, offset));
+			interCodeInsert(irs, newInterCode2(GET_ADDR, res, tmp));
+		}
+	} else if (isSyntax(second, DOT)) {
+		char *id = last->text;
+		Operand *base = tempOperand(-1);
+		interCodesBind(irs, translateExp(first, base));
+		assert(type->kind == STRUCTURE);
+		Field *field = fieldFind(&type->structure, id);
+		assert(field != NULL);
+		Operand *offset = constOperand(fieldOffset(&type->structure, id));
+		type = field->type;
+		if (res->id < 0) {
+			res->id = newTempOperandId();
+			interCodeInsert(irs, newInterCode3(ADD, res, base, offset));
+		} else {
+			Operand *tmp = newTempOperand();
+			interCodeInsert(irs, newInterCode3(ADD, tmp, base, offset));
+			interCodeInsert(irs, newInterCode2(GET_ADDR, res, tmp));
 		}
 	} else if (isSyntax(first, LP)) {
 		return translateExp(second, res);
