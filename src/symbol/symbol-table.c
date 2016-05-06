@@ -48,7 +48,7 @@ void symbolRelease(Symbol *symbol) {
 	assert(symbol!= NULL);
 	SymbolKind kind = symbol->kind;
 	Type *type = symbol->type;
-	if (((kind == VAR)&&(type->kind == ARRAY))||(kind == STRUCT)) {
+	if (((kind == STRUCT)&&(type->kind == ARRAY))||(kind == STRUCT)) {
 		typeRelease(type);
 	}
 	free(symbol->name);

@@ -109,7 +109,6 @@ static Type* baseType(Type* type) {
 void typeToStr(Type* type, char* s) {
 	assert(type != NULL);
 	assert(s != NULL);
-	printf("%d\n", type->kind);
 	if (typeEqual(type, TYPE_INT)) {
 		strcpy(s, "int");
 	} else if (typeEqual(type, TYPE_FLOAT)) {
@@ -135,6 +134,7 @@ void argsToStr(ListHead* list, char* s) {
 		typeToStr(arg->type, s);
 		s += strlen(s);
 	}
+	*s = 0;
 }
 
 Field* fieldFind(ListHead* structure, const char* fieldName) {

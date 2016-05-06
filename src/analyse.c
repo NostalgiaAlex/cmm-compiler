@@ -248,9 +248,6 @@ static Symbol* analyseFunDec(TreeNode* p, Type* type, bool isDef) {
 				funcRelease(symbol->func);
 				symbol->func = func;
 			}
-			Arg *arg = listEntry(symbol->func->args.next, Arg, list);
-			printf("0x%llx\n", (uint64_t)arg->type);
-			printf("%d\n", arg->type->array.size);
 			return symbol;
 		} else {
 			semanticError(19, p->lineNo, symbol->name);
@@ -383,9 +380,6 @@ static Val analyseExp(TreeNode* p) {
 				bool ok = true;
 				if (isSyntax(args, Args))
 					ok = analyseArgs(args, &list);
-				Arg *arg = listEntry(symbol->func->args.next, Arg, list);
-				printf("0x%llx\n", (uint64_t)arg->type);
-				printf("%d\n", arg->type->array.size);
 				if (ok&&(!argsEqual(&list, &symbol->func->args))) {
 					assert(symbol->kind == FUNC);
 					char paramsStr[32], argsStr[32];
