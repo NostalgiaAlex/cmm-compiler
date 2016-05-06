@@ -8,6 +8,7 @@ static Symbol* newSymbol(SymbolKind kind, const char * name) {
 	symbol->kind = kind;
 	symbol->name = toArray(name);
 	symbol->id = -1;
+	symbol->isRef = false;
 	return symbol;
 }
 

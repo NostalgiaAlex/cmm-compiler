@@ -50,6 +50,7 @@ typedef struct Symbol {
 		Func* func;
 	};
 	int id;
+	bool isRef;
 	int depth;
 } Symbol;
 Symbol* newVarSymbol(const char*, Type*);
