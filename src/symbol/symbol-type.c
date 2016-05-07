@@ -1,8 +1,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
-#include <symbol.h>
-#include <stdio.h>
+#include "symbol.h"
 
 static Type _TYPE_INT, _TYPE_FLOAT;
 Type* const TYPE_INT = &_TYPE_INT;
@@ -39,7 +38,7 @@ bool typeEqual(Type* a, Type* b) {
 	}
 	return false;
 }
-bool argsEqual(ListHead* a, ListHead* b) {
+bool argsEqual(Args *a, Args *b) {
 	assert(a != NULL);
 	assert(b != NULL);
 	ListHead *p = a->next, *q = b->next;
@@ -59,7 +58,7 @@ bool funcEqual(Func* a, Func* b) {
 			argsEqual(&a->args, &b->args));
 }
 
-void argsRelease(ListHead *args) {
+void argsRelease(Args *args) {
 	assert(args != NULL);
 	while (!listIsEmpty(args)) {
 		Arg* arg = listEntry(args->next, Arg, list);
@@ -121,10 +120,10 @@ void typeToStr(Type* type, char* s) {
 		strcpy(s, "struct");
 	}
 }
-void argsToStr(ListHead* list, char* s) {
+void argsToStr(Args * list, char* s) {
 	assert(list != NULL);
 	assert(s != NULL);
-	ListHead *p;
+	Args *p;
 	listForeach(p, list) {
 		Arg *arg = listEntry(p, Arg, list);
 		if (p != list->next) {
@@ -137,7 +136,7 @@ void argsToStr(ListHead* list, char* s) {
 	*s = 0;
 }
 
-Field* fieldFind(ListHead* structure, const char* fieldName) {
+Field* fieldFind(Fields* structure, const char* fieldName) {
 	assert(structure != NULL);
 	assert(fieldName != NULL);
 	ListHead *p;
@@ -149,7 +148,7 @@ Field* fieldFind(ListHead* structure, const char* fieldName) {
 	return NULL;
 }
 
-int fieldOffset(ListHead *structure, const char* fieldName) {
+int fieldOffset(Fields *structure, const char* fieldName) {
 	assert(structure != NULL);
 	assert(fieldName != NULL);
 	int offset = 0;

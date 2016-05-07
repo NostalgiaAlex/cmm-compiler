@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <symbol.h>
 #include "syntax-tree.h"
 #include "inter-code.h"
 #include "symbol.h"
@@ -41,17 +40,17 @@ static Type* retType;
 static Type* analyseSpecifier(TreeNode*);
 static void analyseExtDef(TreeNode*);
 static void analyseExtDecList(TreeNode *, Type*);
-static void analyseDefList(TreeNode*, ListHead*);
-static void analyseDef(TreeNode*, ListHead*);
-static void analyseDecList(TreeNode*, Type*, ListHead*);
-static void analyseDec(TreeNode*, Type*, ListHead*);
+static void analyseDefList(TreeNode*, Fields*);
+static void analyseDef(TreeNode*, Fields*);
+static void analyseDecList(TreeNode*, Type*, Fields*);
+static void analyseDec(TreeNode*, Type*, Fields*);
 static Dec* analyseVarDec(TreeNode*, Type*);
 static Symbol* analyseFunDec(TreeNode*, Type*, bool);
-static void analyseVarList(TreeNode*, ListHead*);
+static void analyseVarList(TreeNode*, Args*);
 static Arg* analyseParamDec(TreeNode*);
 static void analyseStmtList(TreeNode*);
 static void analyseStmt(TreeNode*);
-static bool analyseArgs(TreeNode*, ListHead*);
+static bool analyseArgs(TreeNode*, Args*);
 static void analyseCompSt(TreeNode*, Func*);
 
 typedef struct Val {
@@ -142,7 +141,7 @@ static Type* analyseSpecifier(TreeNode* p) {
 	return NULL;
 }
 
-static void analyseDefList(TreeNode* p, ListHead* list) {
+static void analyseDefList(TreeNode* p, Fields* list) {
 	assert(isSyntax(p, DefList));
 	analyseDef(treeFirstChild(p), list);
 	TreeNode *rest = treeLastChild(p);
@@ -150,7 +149,7 @@ static void analyseDefList(TreeNode* p, ListHead* list) {
 		analyseDefList(rest, list);
 }
 
-static void analyseDef(TreeNode* p, ListHead* list) {
+static void analyseDef(TreeNode* p, Fields* list) {
 	assert(isSyntax(p, Def));
 	TreeNode *specifier = treeFirstChild(p);
 	TreeNode *decList = treeKthChild(p, 2);
@@ -158,7 +157,7 @@ static void analyseDef(TreeNode* p, ListHead* list) {
 	analyseDecList(decList, type, list);
 }
 
-static void analyseDecList(TreeNode* p, Type* type, ListHead* list) {
+static void analyseDecList(TreeNode* p, Type* type, Fields* list) {
 	assert(isSyntax(p, DecList));
 	TreeNode *dec = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
@@ -167,7 +166,7 @@ static void analyseDecList(TreeNode* p, Type* type, ListHead* list) {
 		analyseDecList(rest, type, list);
 }
 
-static void analyseDec(TreeNode* p, Type* type, ListHead* list) {
+static void analyseDec(TreeNode* p, Type* type, Fields* list) {
 	assert(isSyntax(p, Dec));
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *last = treeLastChild(p);
@@ -214,12 +213,13 @@ static Dec* analyseVarDec(TreeNode* p, Type* type) {
 	}
 }
 
+typedef ListHead FunSymbols;
 typedef struct FunSymbol {
 	Symbol *symbol;
 	int lineNo;
 	ListHead list;
 } FunSymbol;
-ListHead funSymbols;
+FunSymbols funSymbols;
 static Symbol* analyseFunDec(TreeNode* p, Type* type, bool isDef) {
 	assert(isSyntax(p, FunDec));
 	assert(type != NULL);
@@ -257,7 +257,7 @@ static Symbol* analyseFunDec(TreeNode* p, Type* type, bool isDef) {
 	return NULL;
 }
 
-static void analyseVarList(TreeNode* p, ListHead* list) {
+static void analyseVarList(TreeNode* p, Args* list) {
 	assert(isSyntax(p, VarList));
 	Arg *arg = analyseParamDec(treeFirstChild(p));
 	listAddBefore(list, &arg->list);
@@ -374,7 +374,7 @@ static Val analyseExp(TreeNode* p) {
 			} else if (symbol->kind != FUNC) {
 				semanticError(11, id->lineNo, id->text);
 			} else {
-				ListHead list;
+				Args list;
 				listInit(&list);
 				TreeNode *args = treeKthChild(p, 3);
 				bool ok = true;
@@ -468,18 +468,18 @@ static Val analyseExp(TreeNode* p) {
 	return makeVal(NULL);
 }
 
-static bool analyseArgs(TreeNode* p, ListHead* list) {
-	assert(list != NULL);
+static bool analyseArgs(TreeNode* p, Args* args) {
+	assert(args != NULL);
 	assert(isSyntax(p, Args));
 	TreeNode *exp = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);
 	Arg *arg = (Arg*)malloc(sizeof(Arg));
 	arg->type = analyseExp(exp).type;
 	arg->name = NULL;
-	listAddBefore(list, &arg->list);
+	listAddBefore(args, &arg->list);
 	if (arg->type == NULL) return false;
 	if (isSyntax(rest, Args))
-		return analyseArgs(rest, list);
+		return analyseArgs(rest, args);
 	return true;
 }
 

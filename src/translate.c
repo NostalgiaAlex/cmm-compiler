@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <symbol.h>
-#include "syntax-tree.h"
 #include "translate.h"
 
 static InterCodes head;
@@ -60,7 +59,7 @@ void defineFunc(char *name, InterCodes *irs) {
 }
 
 static InterCodes* translateCond(TreeNode*, Operand*, Operand*);
-static InterCodes* translateArgs(TreeNode*, ListHead*, ListHead*);
+static InterCodes* translateArgs(TreeNode*, ListHead*, Args*);
 static InterCodes* translateStmtList(TreeNode*);
 static InterCodes* translateStmt(TreeNode*);
 static InterCodes* translateDefList(TreeNode*);
@@ -107,7 +106,7 @@ InterCodes* translateExp(TreeNode *p, Operand *res) {
 		if (isSyntax(last, RP)) { // ID LP Args RP | ID LP RP
 			assert(symbol->kind == FUNC);
 			TreeNode *argsNode = treeKthChild(p, 3);
-			ListHead args;
+			Args args;
 			listInit(&args);
 			if (isSyntax(argsNode, Args)) {
 				ListHead *firstArg = symbol->func->args.next;
@@ -304,7 +303,7 @@ static InterCodes* translateCond(TreeNode *p, Operand *labelTrue, Operand *label
 	}
 }
 
-static InterCodes* translateArgs(TreeNode *p, ListHead *curArg, ListHead *args) {
+static InterCodes* translateArgs(TreeNode *p, ListHead *curArg, Args *args) {
 	assert(isSyntax(p, Args));
 	TreeNode *first = treeFirstChild(p);
 	TreeNode *rest = treeLastChild(p);

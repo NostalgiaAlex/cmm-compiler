@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include "inter-code.h"
 #include "common.h"
+#include "inter-code.h"
 #include "symbol.h"
 
 static Symbol* newSymbol(SymbolKind kind, const char * name) {

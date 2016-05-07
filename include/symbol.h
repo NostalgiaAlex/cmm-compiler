@@ -7,12 +7,13 @@
 
 typedef enum { BASIC, ARRAY, STRUCTURE } TypeKind;
 typedef enum { VAR, STRUCT, FUNC } SymbolKind;
+typedef ListHead Fields;
 typedef struct Type {
 	TypeKind kind;
 	union {
 		int basic;
 		struct { struct Type *elem; int size; } array;
-		ListHead structure;
+		Fields structure;
 	};
 } Type;
 typedef struct Field {
@@ -20,26 +21,27 @@ typedef struct Field {
 	Type* type;
 	ListHead list;
 } Field;
+typedef Fields Args;
+typedef Field Arg;
 typedef struct Func {
 	Type* retType;
-	ListHead args;
+	Args args;
 	bool defined;
 } Func;
-typedef Field Arg;
 
 extern Type* const TYPE_INT;
 extern Type* const TYPE_FLOAT;
 void typesInit();
 bool typeEqual(Type*, Type*);
-bool argsEqual(ListHead*, ListHead*);
+bool argsEqual(Args*, Args*);
 bool funcEqual(Func*, Func*);
-void argsRelease(ListHead *args);
+void argsRelease(Args*);
 void funcRelease(Func *);
 void typeRelease(Type *);
 void typeToStr(Type*, char*);
-void argsToStr(ListHead*, char*);
-Field* fieldFind(ListHead*, const char*);
-int fieldOffset(ListHead*, const char*);
+void argsToStr(Args*, char*);
+Field* fieldFind(Fields*, const char*);
+int fieldOffset(Fields*, const char*);
 int typeSize(Type *);
 
 typedef struct Symbol {
