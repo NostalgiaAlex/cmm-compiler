@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "lib/List.h"
+#include "lib/list.h"
 #include "syntax-tree.h"
 
 TreeNode *root = NULL;

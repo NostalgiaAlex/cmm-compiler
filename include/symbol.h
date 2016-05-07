@@ -1,7 +1,7 @@
 #ifndef COMPILER_SYMBOL_H
 #define COMPILER_SYMBOL_H
 #include <stdbool.h>
-#include "lib/List.h"
+#include "lib/list.h"
 #include "syntax-tree.h"
 #include "inter-code.h"
 

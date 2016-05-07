@@ -1,7 +1,7 @@
 #ifndef COMPILER_SYNTAX_TREE_H
 #define COMPILER_SYNTAX_TREE_H
 
-#include "lib/List.h"
+#include "lib/list.h"
 
 typedef struct TreeNode {
 	int lineNo, token;

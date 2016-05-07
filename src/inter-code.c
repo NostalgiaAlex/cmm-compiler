@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "lib/List.h"
+#include "lib/list.h"
 #include "inter-code.h"
 
 #define SIZE 10005

@@ -1,5 +1,5 @@
 #include "common.h"
-#include "lib/List.h"
+#include "lib/list.h"
 #include <assert.h>
 
 static void listAdd(ListHead *prev, ListHead *next, ListHead *data) {

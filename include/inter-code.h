@@ -2,9 +2,12 @@
 #define COMPILER_INTER_CODE_H
 
 #include <stdio.h>
-#include "lib/List.h"
+#include "lib/list.h"
 
-typedef enum { VARIABLE, TEMP, CONSTANT, LABEL, FUNCTION } OperandKind;
+typedef enum {
+	VARIABLE, TEMP, CONSTANT,
+	LABEL, FUNCTION,
+} OperandKind;
 typedef struct Operand {
 	OperandKind kind;
 	union {

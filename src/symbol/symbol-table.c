@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "lib/List.h"
+#include "lib/list.h"
 #include "symbol.h"
 
 #define MASK     0x3FFF
